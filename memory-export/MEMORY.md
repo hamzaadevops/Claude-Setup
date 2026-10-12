@@ -1,0 +1,11 @@
+- [Project naming: Dealerships vs DealerPulse](project_naming_dealerships_vs_dealerpulse.md) — migrated project is Dealerships; DealerPulse is a separate new project; all AWS resources stay named dealerpulse-*
+- [Dealerships AWS migration](project_dealerships_aws_migration.md) — account/region, doc layout, resources built so far, open blockers, CLI gotchas
+- [Migration logging requirement](feedback_migration_logging.md) — log every AWS command + narrative history, proactively, every session
+- [Dealerships Cloudflare config](project_dealerships_cloudflare_config.md) — every CF/SG change made 2026-09-03/04 + failure symptom of each, for future debugging
+- [Team US-egress VPN](project_team_vpn.md) — same AWS account, isolated subnet/SG, wg-easy box live, one manual setup step left
+- [Production VM change approval](feedback_prod_vm_change_approval.md) — never change prod AWS VMs without asking first, even under a broad instruction
+- [Credential creation blocked](feedback_credential_creation_blocked.md) — classifier blocks secret creation + shared-resource writes + remote installs, even mocked/local versions; don't retry, restructure or hand to user
+- [DealerPulse project](project_dealerpulse.md) — separate from Dealerships; known stack, doc location, open unknowns
+- [TODO change approval](feedback_todo_change_approval.md) — discuss before editing TODO.md; it drives what the team does next
+- [Verify before stating](feedback_verify_before_stating.md) — never present inference as fact; check first, mark provenance, correct plainly
+- [Fluten RDP box](project_fluten_rdp_box.md) — rented US RDP; network is great, CPU is 27x slow; don't re-diagnose as network
