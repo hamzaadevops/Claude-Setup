@@ -14,7 +14,9 @@ redesigns, refactors, upgrades or TODO items unless asked. If a question implies
 ## Mental model (memorise)
 - AWS `409289617504`, `us-west-2`. Resource names `dealerpulse-*` (correct; the project is called Dealerships).
 - Cloudflare -> ALB `dealerpulse-alb` (Cloudflare IPs only) -> nginx :443 on **nodeA** `i-061291ea974c4ea1b` and **nodeB** `i-0c982c44f93bfbc0a`
-  -> loopback containers: `ocean` (Django :9000 + Celery worker/beat + Redis) and one `website_frontend*` per tenant (PHN :3000, Surf City :3001, Corona, SB).
+  -> loopback containers: `ocean` (Django :9000 + Celery worker/beat + Redis) and one `website_frontend*` per tenant (PHN :3000, Surf City :3001, Corona :3002, SB: read from box).
+- HomeNet inventory warms 3×/day (01, 15, 20 UTC) into per-node Redis with a 20 h TTL; site config is baked into each tenant image at build time.
+- Deep reference: `knowledge/DEPLOY_FLOWS.md`, `knowledge/ISSUES_AWS_A.md`, `knowledge/ISSUES_AWS_B.md` (grep them for any component name).
 - **integration** `i-03efb82c808863f84`: `ocean-shared-postgres` (database for all tenants), chat_back (:9002 WS, OpenRouter, pgvector),
   leads (:8129, VinSolutions/Cox), admin dashboard (:3003). Reached directly via Cloudflare (`admin.`/`chat.`/`leads.callingyounow.us`), not the ALB.
 - Tenancy: `?dealership_id=` first, then Host -> `Domain` table. Frontend tenant is baked into the image at build time.

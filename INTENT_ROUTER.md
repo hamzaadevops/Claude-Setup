@@ -9,7 +9,7 @@ Cloudflare/SG/certs `dealerships-edge-cloudflare` · health/alarms `dealerships-
 VPN/Kuma/RDP `team-vpn-and-uptime` · DigitalOcean `dealerpulse-digitalocean`.
 
 Provenance tags: `[doc]` from our files (re-verify live), `[verified]` checked at time of writing.
-Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`, repos = `Documents\<repo>\`.
+Paths: docs = `Claude-Setup\records\`, this pack = `Documents\Claude-Setup\`, repos = `Documents\<repo>\`.
 
 ---
 
@@ -34,12 +34,16 @@ Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`
 |---|---|---|---|
 | "Site is down / 5xx / 502" | Brief 502 window during frontend deploy (expected); node unhealthy; integration VM swapping | `describe-alarms`, `describe-target-health` both TGs, ALB 5xx metric, `docker ps` + `free -m` on nodes via SSM | Yes for restarts |
 | "Page loads but no content / blank sections" | **428 SSR bootstrap cache** (INCIDENTS #1) | Count ` 428 ` in nginx log last hour; frontend started before Django | Yes: `docker restart website_frontend*` one node at a time |
-| "Chatbot says temporarily unavailable" | **OpenRouter credits exhausted** (INCIDENTS #3) | `chat_back` logs for 402; ask user to check OpenRouter balance | Topping up is the user's |
+| "Chatbot says temporarily unavailable" | **OpenRouter credits exhausted** (INCIDENTS #2) | `chat_back` logs for 402; ask user to check OpenRouter balance | Topping up is the user's |
 | "Chatbot slow / integration box slow" | `chat_back` back on 4 uvicorn workers -> swap | `free -m`, `docker stats`, compose `--workers` | Yes |
 | "ChunkLoadError / JS 404 after deploy" | Two nodes on different builds | Compare `.next/static/chunks` or image digest on nodeA vs nodeB; CF `cf-cache-status` | Yes |
 | "Images broken" | Cloudflare hotlink protection; HomeNet image CDN stall + Next optimizer timeouts; stale 30-day static cache | Check hotlink setting; nginx 500/504 on `/_next/image` | Yes |
 | "Replaced an image, still old" | CF static rule force-caches by extension for 30 days | Purge in CF (user does it, see §D) | n/a |
-| "Latency alarm fired" | **Redis cache stampede every 2 h** (UTC even hours at :00 boundary) + image optimizer; alarm is correct | Check firing time against 00/02/04... UTC boundary | Do not retune alarm |
+| "Latency alarm fired" | **New signal:** the 2-hourly cache stampede was fixed 2026-09-21 (TTL 72000) and the alarm had been quiet since. Check HomeNet warm, image optimizer, a recent deploy | Worker log `ttl=72000 ... failed_dealerships=0`; nginx `rt=` slow paths; skill `dealerships-troubleshooting` | Do not retune alarm |
+| "Deploy pipeline failed / dirty files" | Health window too short, or someone edited the checkout on the VM (guard working) | Check the node itself; `git status` in the deploy dir (read-only) | Yes to fix |
+| "Customers didn't get confirmation email" | leads SMTP credential rejected (535) | leads_backend logs | Credential owner |
+| "Kuma: everything down / 403 on dashboard" | Kuma memory pressure / your IP not allowlisted | skill `team-vpn-and-uptime` | Yes |
+| "VPN won't connect" | SG lost UDP 51820; stale `Endpoint` 44.242.4.12 in client config | SG rules; client config | Yes |
 | "522 / 524 / 525 / 526" | CF cannot reach/validate origin: SG prefix-list drift, expired origin cert (certbot), node SG stale | `certbot certificates`, SG list on instance, prefix lists vs cloudflare.com/ips | Yes |
 | "Direct IP does not respond" | By design: origin locked to Cloudflare/ALB | Use SSM, do not edit SGs | n/a |
 | "Redirect loop" | Origin SSL mode / HSTS window / `always_use_https` | CF SSL mode must stay "Full" | Yes |
@@ -55,8 +59,8 @@ Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`
 
 | They say | Do | Approval |
 |---|---|---|
-| "Deploy X" | **Do not run `deploy.sh` by hand.** Normal path = merge to branch -> Bitbucket Pipeline -> ECR -> single SSM call to both nodes -> CF purge. Branches: `main-migrated` (Puente Hills + shared), `main-surfcity`, `main-corona`, `main-sanbernardino`. RUNBOOKS §1 | Always |
-| "Rollback" | Surf City: `revert-surfcity` custom pipeline (redeploy by 7-char SHA). Puente Hills: none (cancelled by user); redeploy previous commit via pipeline. ALB: `dealerpulse-tg-nginx` is the detached instant-rollback TG | Always |
+| "Deploy X" / "what will this merge do" | **Do not run `deploy.sh` by hand.** Skill `dealerships-deploy`: merge to the `main-*` branch → pipeline → ECR → SSM. Frontends hit both nodes at once + Cloudflare purge; **ocean needs the manual Node B click**. Legacy `main`/`master`/`staging` branches still deploy to old hosts. Check the 428 canary after | Always |
+| "Rollback" | Revert the commit on the same branch (or re-run the previous good pipeline). `revert-surfcity` was removed from production branches 2026-10-01; no Puente Hills revert (user decision). ALB: `dealerpulse-tg-nginx` is the detached instant-rollback TG | Always |
 | "Add an env var" | `.env` edit then `docker compose up -d --no-deps <svc>` (never `restart`) | Always |
 | "Add a new dealership" | RUNBOOKS §2. **Ask which pipeline pattern** (single-branch vs per-branch) | Always |
 | "Change Cloudflare" | RUNBOOKS §5. Rulesets are full-replace PUT: resubmit every existing rule | Ask; user supplies token |
@@ -72,14 +76,15 @@ Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`
 | They say | Do |
 |---|---|
 | "Daily check / sweep / health report" | RUNBOOKS §3. Read-only. Write a dated entry in `MIGRATION_HISTORY.md` |
-| "Check the alarms" | `aws cloudwatch describe-alarms ...` (HANDOVER §7). 7 alarms expected, all OK as of 10-05 |
+| "Check the alarms" | `aws cloudwatch describe-alarms ...` (skill `dealerships-monitoring`). 7 alarms, all OK as of 10-05 |
+| "Has this happened before?" / any error text | `grep -n -i "<text>" knowledge/*.md`, then read the cited lines in `records/` |
 | "Uptime / Kuma" | `uptime.callingyounow.us`; setup `Monitoring/UPTIME_MONITORING_SETUP.md`, list `MONITOR_CHECKLIST.md`. Keyword checks use street address, not dealership name |
 | "MyUptimeIP <ip>" | Invoke skill `MyUptimeIP` |
 | "Logs / what happened at HH:MM" | Container logs are `+0500`, nginx and CloudWatch are **UTC**; user is in Pakistan (PKT = UTC+5) |
-| "What's pending / priorities" | The system is stable and accepted: nothing is mandatory. Show `STATUS.md` watch-list and open questions; `Documentations/TODO.md` only as optional ideas (**do not edit without discussion**) |
+| "What's pending / priorities" | The system is stable and accepted: nothing is mandatory. Show `STATUS.md` watch-list and open questions; `records/TODO.md` only as optional ideas (**do not edit without discussion**) |
 | "How does X work / explain the setup" | `ARCHITECTURE.md` + skill `dealerships-architecture` (or `dealerpulse-digitalocean`). Describe as built; do not propose changes unless asked |
 | "Should we improve / optimise / upgrade X" | Skill `dealerships-change-control`: default is no change; give the trade-off, wait for a decision |
-| "What did we do about X / why" | `Documentations/Migration/MIGRATION_HISTORY.md` (narrative) then `COMMAND_LOG.md` (exact commands) |
+| "What did we do about X / why" | `records/Migration/MIGRATION_HISTORY.md` (narrative) then `COMMAND_LOG.md` (exact commands) |
 | "Cost / bill" | `Documents/AWS_Cost_Report_Sep-Oct_2026.pdf`; history entry 2026-10-03 "Cost cleanup"; `OCTOBER_CAPACITY_PLAN.md` |
 | "Is X still true?" | Run the read-only command, report `[verified]` with output, update `STATUS.md` |
 
@@ -87,7 +92,7 @@ Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`
 
 | They say | Do |
 |---|---|
-| "Write a handover / report / message for X" | Say who it's written for in one line, match their level. Docs go in `Documentations/`. Published docs: use the Docs/Artifact tools if asked |
+| "Write a handover / report / message for X" | Say who it's written for in one line, match their level. Docs go in `records/`. Published docs: use the Docs/Artifact tools if asked |
 | "Update the docs" | Append to MIGRATION_HISTORY (narrative) and COMMAND_LOG (commands, verbatim). Never rewrite the command log |
 | "Incident report" | Use `DealerPulse/INCIDENT_REPORT_CTO.md` and `INCIDENT_2026-09-16.md` as templates; all timestamps UTC with PKT equivalent |
 | "Message for the dev team" | Drafts exist in MIGRATION_HISTORY 2026-09-17 (`.htm`) and `DealerPulse/BACKEND_FIXES.md` |

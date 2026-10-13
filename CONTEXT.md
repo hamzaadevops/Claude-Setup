@@ -1,6 +1,6 @@
 # CONTEXT — history and how we got here
 
-Narrative background. For how the system works now, read `ARCHITECTURE.md`. All `[doc]` from `Documentations/Migration/MIGRATION_HISTORY.md`
+Narrative background. For how the system works now, read `ARCHITECTURE.md`. All `[doc]` from `records/Migration/MIGRATION_HISTORY.md`
 (the full record), `HANDOVER.md` and saved notes.
 
 ## 1. Two projects
@@ -31,7 +31,7 @@ Dealerships was recorded as "DealerPulse" until 2026-09-17; prose was corrected,
 | 2026-10-13 | Knowledge consolidated into this pack; stance set to stability first. |
 
 ## 3. Where the detail lives
-| Path (under `Documents\Documentations\`) | Contents |
+| Path (under `Claude-Setup\records\`) | Contents |
 |---|---|
 | `HANDOVER.md` | Operational handover |
 | `Migration/MIGRATION_HISTORY.md` | Every session: evidence, root causes, decisions |

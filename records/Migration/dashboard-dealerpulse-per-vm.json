@@ -1,0 +1,59 @@
+{
+  "variables": [
+    { "type": "property", "property": "InstanceId", "inputType": "select", "id": "vm",
+      "label": "Pick a VM", "search": "CWAgent MetricName=\"mem_used_percent\"", "populateFrom": "InstanceId" }
+  ],
+  "widgets": [
+    { "type": "text", "x": 0, "y": 0, "width": 24, "height": 3,
+      "properties": { "markdown": "## DealerPulse - Single VM Detail\n\nUse the **Pick a VM** dropdown at the top to switch every chart below between nodeA, nodeB and integration.\n\n`i-061291ea974c4ea1b` = nodeA (frontend) | `i-0c982c44f93bfbc0a` = nodeB (frontend) | `i-03efb82c808863f84` = integration (shared Postgres)" } },
+
+    { "type": "metric", "x": 0, "y": 3, "width": 8, "height": 6,
+      "properties": { "title": "Memory used %", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "annotations": { "horizontal": [ { "label": "warn 85%", "value": 85 } ] },
+        "metrics": [ [ "CWAgent", "mem_used_percent", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 8, "y": 3, "width": 8, "height": 6,
+      "properties": { "title": "Memory available (MB)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "metrics": [ [ "CWAgent", "mem_available", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 16, "y": 3, "width": 8, "height": 6,
+      "properties": { "title": "Swap used %", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "annotations": { "horizontal": [ { "label": "warn 50%", "value": 50 } ] },
+        "metrics": [ [ "CWAgent", "swap_used_percent", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 0, "y": 9, "width": 8, "height": 6,
+      "properties": { "title": "CPU active % (in-guest)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "metrics": [ [ "CWAgent", "cpu_usage_active", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 8, "y": 9, "width": 8, "height": 6,
+      "properties": { "title": "CPU iowait %", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "metrics": [ [ "CWAgent", "cpu_usage_iowait", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 16, "y": 9, "width": 8, "height": 6,
+      "properties": { "title": "Disk used % (root)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "annotations": { "horizontal": [ { "label": "warn 80%", "value": 80 } ] },
+        "metrics": [ [ "CWAgent", "disk_used_percent", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 0, "y": 15, "width": 8, "height": 6,
+      "properties": { "title": "CPU credit balance", "region": "us-west-2", "view": "timeSeries", "stat": "Minimum", "period": 300,
+        "annotations": { "horizontal": [ { "label": "alarm below 10", "value": 10 } ] },
+        "metrics": [ [ "AWS/EC2", "CPUCreditBalance", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 8, "y": 15, "width": 8, "height": 6,
+      "properties": { "title": "CPU utilization % (hypervisor view)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "metrics": [ [ "AWS/EC2", "CPUUtilization", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "metric", "x": 16, "y": 15, "width": 8, "height": 6,
+      "properties": { "title": "Disk free (bytes)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "metrics": [ [ "CWAgent", "disk_free", "InstanceId", "i-061291ea974c4ea1b" ] ] } },
+
+    { "type": "log", "x": 0, "y": 21, "width": 24, "height": 7,
+      "properties": { "title": "nginx errors across all VMs (logStream names the VM - dropdown does not filter logs)", "region": "us-west-2", "view": "table",
+        "query": "SOURCE '/dealerpulse/nginx/error' | fields @timestamp, @logStream, @message | sort @timestamp desc | limit 40" } }
+  ]
+}

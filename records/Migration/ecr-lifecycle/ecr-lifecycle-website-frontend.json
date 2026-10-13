@@ -1,0 +1,9 @@
+{"rules":[
+ {"rulePriority":1,"description":"Protect latest and latest_* tags","selection":{"tagStatus":"tagged","tagPatternList":["latest*"],"countType":"imageCountMoreThan","countNumber":9999},"action":{"type":"expire"}},
+ {"rulePriority":2,"description":"Protect pre-* rollback markers","selection":{"tagStatus":"tagged","tagPatternList":["pre-*"],"countType":"imageCountMoreThan","countNumber":9999},"action":{"type":"expire"}},
+ {"rulePriority":3,"description":"Keep last 10 surfcity builds","selection":{"tagStatus":"tagged","tagPatternList":["*-surfcity"],"countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}},
+ {"rulePriority":4,"description":"Keep last 10 corona builds","selection":{"tagStatus":"tagged","tagPatternList":["*-corona"],"countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}},
+ {"rulePriority":5,"description":"Keep last 10 sanbernardino builds","selection":{"tagStatus":"tagged","tagPatternList":["*-sanbernardino"],"countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}},
+ {"rulePriority":6,"description":"Keep last 30 tagged builds (window includes per-dealership tags)","selection":{"tagStatus":"tagged","tagPatternList":["*"],"countType":"imageCountMoreThan","countNumber":30},"action":{"type":"expire"}},
+ {"rulePriority":7,"description":"Expire untagged images after 7 days","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit":"days","countNumber":7},"action":{"type":"expire"}}
+]}

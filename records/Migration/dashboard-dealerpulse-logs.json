@@ -1,0 +1,35 @@
+{
+  "variables": [
+    { "type": "pattern", "pattern": "LOGSOURCE", "inputType": "select", "id": "src", "label": "Log source",
+      "defaultValue": "/dealerpulse/ocean/web",
+      "values": [
+        { "value": "/dealerpulse/ocean/web",        "label": "Django API (ocean/web)" },
+        { "value": "/dealerpulse/ocean/worker",     "label": "Celery worker" },
+        { "value": "/dealerpulse/ocean/beat",       "label": "Celery beat" },
+        { "value": "/dealerpulse/website-frontend", "label": "Next.js SSR (website-frontend)" },
+        { "value": "/dealerpulse/chat-backend",     "label": "Chat backend" },
+        { "value": "/dealerpulse/leads-backend",    "label": "Leads backend" },
+        { "value": "/dealerpulse/admin-dashboard",  "label": "Admin dashboard" },
+        { "value": "/dealerpulse/nginx/access",     "label": "nginx access (BROKEN - not shipping)" },
+        { "value": "/dealerpulse/nginx/error",      "label": "nginx error (BROKEN - not shipping)" }
+      ] },
+    { "type": "pattern", "pattern": "LOGFILTER", "inputType": "select", "id": "flt", "label": "Filter",
+      "defaultValue": "filter @message like /./",
+      "values": [
+        { "value": "filter @message like /./",                                       "label": "Everything" },
+        { "value": "filter @message like /ERROR|Error|Traceback|CRITICAL|Exception/", "label": "Errors only" },
+        { "value": "filter @message like /WARNING|WARN/",                            "label": "Warnings only" },
+        { "value": "filter @message like /\" 5[0-9][0-9] /",                         "label": "HTTP 5xx only" },
+        { "value": "filter @message like /\" 4[0-9][0-9] /",                         "label": "HTTP 4xx only" },
+        { "value": "filter @message like /null/",                                    "label": "null-slug bug" }
+      ] }
+  ],
+  "widgets": [
+    { "type": "text", "x": 0, "y": 0, "width": 24, "height": 2,
+      "properties": { "markdown": "## DealerPulse - Logs\n\n**Log source** picks the service, **Filter** narrows what you see. `@logStream` in the results names the VM (`nodeA-web` / `nodeB-web`). Keep the time range short - Logs Insights bills per GB scanned on every refresh." } },
+
+    { "type": "log", "x": 0, "y": 2, "width": 24, "height": 24,
+      "properties": { "title": "Logs", "region": "us-west-2", "view": "table",
+        "query": "SOURCE 'LOGSOURCE' | fields @timestamp, @logStream, @message | LOGFILTER | sort @timestamp desc | limit 200" } }
+  ]
+}

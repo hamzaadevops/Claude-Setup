@@ -1,0 +1,95 @@
+{
+  "widgets": [
+    { "type": "text", "x": 0, "y": 0, "width": 24, "height": 4,
+      "properties": { "markdown": "## DealerPulse - Fleet Overview\n\n| VM | instance | type | role |\n|---|---|---|---|\n| nodeA | i-061291ea974c4ea1b | t3.large | frontend, ALB weight 35 |\n| nodeB | i-0c982c44f93bfbc0a | t3.large | frontend, ALB weight 65 |\n| integration | i-03efb82c808863f84 | t3.medium | shared Postgres + chat/leads/admin |\n\n**Watch:** integration swap (only memory-constrained box) / nodeA CPU credits / ALB 5xx rate. Log panels at the bottom show `@logStream`, which names the VM." } },
+
+    { "type": "metric", "x": 0, "y": 4, "width": 8, "height": 6,
+      "properties": { "title": "Memory used %", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "annotations": { "horizontal": [ { "label": "warn 85%", "value": 85 } ] },
+        "metrics": [
+          [ "CWAgent", "mem_used_percent", "InstanceId", "i-061291ea974c4ea1b", { "label": "nodeA" } ],
+          [ "...", "i-0c982c44f93bfbc0a", { "label": "nodeB" } ],
+          [ "...", "i-03efb82c808863f84", { "label": "integration" } ] ] } },
+
+    { "type": "metric", "x": 8, "y": 4, "width": 8, "height": 6,
+      "properties": { "title": "Swap used % (integration is the one to watch)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "annotations": { "horizontal": [ { "label": "warn 50%", "value": 50 } ] },
+        "metrics": [
+          [ "CWAgent", "swap_used_percent", "InstanceId", "i-061291ea974c4ea1b", { "label": "nodeA" } ],
+          [ "...", "i-0c982c44f93bfbc0a", { "label": "nodeB" } ],
+          [ "...", "i-03efb82c808863f84", { "label": "integration" } ] ] } },
+
+    { "type": "metric", "x": 16, "y": 4, "width": 8, "height": 6,
+      "properties": { "title": "Memory available (MB)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "metrics": [
+          [ "CWAgent", "mem_available", "InstanceId", "i-061291ea974c4ea1b", { "label": "nodeA" } ],
+          [ "...", "i-0c982c44f93bfbc0a", { "label": "nodeB" } ],
+          [ "...", "i-03efb82c808863f84", { "label": "integration" } ] ] } },
+
+    { "type": "metric", "x": 0, "y": 10, "width": 8, "height": 6,
+      "properties": { "title": "CPU active % (in-guest)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "metrics": [
+          [ "CWAgent", "cpu_usage_active", "InstanceId", "i-061291ea974c4ea1b", { "label": "nodeA" } ],
+          [ "...", "i-0c982c44f93bfbc0a", { "label": "nodeB" } ],
+          [ "...", "i-03efb82c808863f84", { "label": "integration" } ] ] } },
+
+    { "type": "metric", "x": 8, "y": 10, "width": 8, "height": 6,
+      "properties": { "title": "CPU credit balance (t3 burst fuel)", "region": "us-west-2", "view": "timeSeries", "stat": "Minimum", "period": 300,
+        "annotations": { "horizontal": [ { "label": "alarm below 10", "value": 10 } ] },
+        "metrics": [
+          [ "AWS/EC2", "CPUCreditBalance", "InstanceId", "i-061291ea974c4ea1b", { "label": "nodeA" } ],
+          [ "...", "i-0c982c44f93bfbc0a", { "label": "nodeB" } ],
+          [ "...", "i-03efb82c808863f84", { "label": "integration" } ] ] } },
+
+    { "type": "metric", "x": 16, "y": 10, "width": 8, "height": 6,
+      "properties": { "title": "Disk used % (root)", "region": "us-west-2", "view": "timeSeries", "stat": "Average", "period": 300,
+        "yAxis": { "left": { "min": 0, "max": 100 } },
+        "annotations": { "horizontal": [ { "label": "warn 80%", "value": 80 } ] },
+        "metrics": [
+          [ "CWAgent", "disk_used_percent", "InstanceId", "i-061291ea974c4ea1b", { "label": "nodeA" } ],
+          [ "...", "i-0c982c44f93bfbc0a", { "label": "nodeB" } ],
+          [ "...", "i-03efb82c808863f84", { "label": "integration" } ] ] } },
+
+    { "type": "metric", "x": 0, "y": 16, "width": 8, "height": 6,
+      "properties": { "title": "ALB requests/min vs 5xx", "region": "us-west-2", "view": "timeSeries", "stat": "Sum", "period": 60,
+        "metrics": [
+          [ "AWS/ApplicationELB", "RequestCount", "LoadBalancer", "app/dealerpulse-alb/dc80177beaa3aa2f", { "label": "requests" } ],
+          [ ".", "HTTPCode_Target_5XX_Count", ".", ".", { "label": "5xx", "yAxis": "right", "color": "#d62728" } ] ] } },
+
+    { "type": "metric", "x": 8, "y": 16, "width": 8, "height": 6,
+      "properties": { "title": "ALB target response time (s)", "region": "us-west-2", "view": "timeSeries", "period": 60,
+        "annotations": { "horizontal": [ { "label": "alarm 8s", "value": 8 } ] },
+        "metrics": [
+          [ "AWS/ApplicationELB", "TargetResponseTime", "LoadBalancer", "app/dealerpulse-alb/dc80177beaa3aa2f", { "label": "p99", "stat": "p99" } ],
+          [ "...", { "label": "avg", "stat": "Average" } ] ] } },
+
+    { "type": "metric", "x": 16, "y": 16, "width": 8, "height": 6,
+      "properties": { "title": "Healthy targets per node", "region": "us-west-2", "view": "timeSeries", "stat": "Minimum", "period": 60,
+        "yAxis": { "left": { "min": 0, "max": 2 } },
+        "metrics": [
+          [ "AWS/ApplicationELB", "HealthyHostCount", "TargetGroup", "targetgroup/dealerpulse-tg-nodea/6bbad757d3d22f4d", "LoadBalancer", "app/dealerpulse-alb/dc80177beaa3aa2f", { "label": "nodeA" } ],
+          [ ".", ".", ".", "targetgroup/dealerpulse-tg-nodeb/b46fe9c0394bfc73", ".", ".", { "label": "nodeB" } ] ] } },
+
+    { "type": "text", "x": 0, "y": 22, "width": 24, "height": 1,
+      "properties": { "markdown": "### Logs - every panel shows `@logStream`, which identifies the VM. Edit any panel to change the filter." } },
+
+    { "type": "log", "x": 0, "y": 23, "width": 12, "height": 7,
+      "properties": { "title": "nginx errors - newest first (all 3 VMs)", "region": "us-west-2", "view": "table",
+        "query": "SOURCE '/dealerpulse/nginx/error' | fields @timestamp, @logStream, @message | sort @timestamp desc | limit 30" } },
+
+    { "type": "log", "x": 12, "y": 23, "width": 12, "height": 7,
+      "properties": { "title": "nginx 5xx count by VM", "region": "us-west-2", "view": "table",
+        "query": "SOURCE '/dealerpulse/nginx/access' | parse @message /\" (?<status>[0-9]{3}) /  | filter status >= 500 | stats count(*) as errors by @logStream, status | sort errors desc" } },
+
+    { "type": "log", "x": 0, "y": 30, "width": 12, "height": 7,
+      "properties": { "title": "Django (ocean/web) non-2xx by VM", "region": "us-west-2", "view": "table",
+        "query": "SOURCE '/dealerpulse/ocean/web' | parse @message /\" (?<status>[0-9]{3}) /  | filter status >= 400 | stats count(*) as hits by @logStream, status | sort hits desc | limit 20" } },
+
+    { "type": "log", "x": 12, "y": 30, "width": 12, "height": 7,
+      "properties": { "title": "Frontend (Next.js SSR) - newest", "region": "us-west-2", "view": "table",
+        "query": "SOURCE '/dealerpulse/website-frontend' | fields @timestamp, @logStream, @message | sort @timestamp desc | limit 30" } }
+  ]
+}

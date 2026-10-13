@@ -12,13 +12,21 @@ description: "Cloudflare and network edge for the Dealerships platform: zones, S
 
 ## Settings in force
 SSL **Full**; always HTTPS; HSTS 300 s (no includeSubDomains/preload); min TLS 1.2; early hints; hotlink protection on; Auto Minify cannot be enabled (no-ops).
-WAF Free Managed Ruleset (Block, zone-wide). Custom rule: block unless country in **US, CA, PK, JP**; ACME challenge path exempt. Rulesets are full-replace PUT.
+WAF Free Managed Ruleset (Block, zone-wide). Custom rule: block unless country in **US, CA, PK, JP**, with `/.well-known/acme-challenge/` exempt
+(Let's Encrypt). Rulesets are full-replace PUT. If a vendor (Cox/xtime) goes silent, check Security → Events for blocks and consider whether TLS 1.2
+is the cause (rollback is PATCH min TLS to 1.0, with approval).
+Full Cloudflare history and gotchas: `memory-export/project_dealerships_cloudflare_config.md`, `knowledge/ISSUES_AWS_B.md` (CF-01..CF-10, section (b)).
 
 ## Cache rules
 Static assets 30 days by **extension** (also catches `public/` images); `/_next/image` cached; HTML edge-cached respecting origin ISR headers,
 excluding `/api/*`, `/_next/*` and RSC headers (`rsc`, `next-router-state-tree`, `next-router-prefetch`, `next-url`; keep this or the cache is poisoned);
 response-phase `strip_set_cookie` (may be API-only, not visible in the UI); 4xx/5xx edge TTL 0 on the static rule. "Cache Everything [Template]" must stay **disabled**.
-Purge runs automatically after each frontend deploy.
+Purge runs automatically after each frontend deploy. The Free plan only has `purge_everything`: a Surf City/Corona/San Bernardino purge clears the
+whole `callingyounow.us` zone; Puente Hills purges its own zone. To re-purge without a rebuild, use **Redeploy** on the pipeline's purge step
+(deployment `cache-purge`), or the dashboard. Claude can't call purge itself (classifier). After a purge, the first visits from Pakistan are slower
+(origin is in Oregon); this is expected.
+To reach the origin past the cache when testing, use a random *path* (`/origin-probe-<random>`); Cloudflare ignores query strings in the cache key.
+`curl -I` (HEAD) always shows DYNAMIC, so test with GET: `curl -s -o /dev/null -D - <url>`.
 
 ## Origin lockdown
 ALB SG `sg-034a06fe048939fc5` and integration SG `sg-097c63c5851f32550` allow 80/443 only from prefix lists `pl-0dc48316ba9fa95bd` (v4) and

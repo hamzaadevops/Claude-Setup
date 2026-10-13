@@ -1,21 +1,39 @@
 # RUNBOOKS — how to do the recurring things
 
 `[doc]` = from our files. Anything that writes to production needs explicit approval first (CLAUDE.md §3).
-After any change: append to `Documentations/Migration/COMMAND_LOG.md` and `MIGRATION_HISTORY.md`.
+After any change: append to `records/Migration/COMMAND_LOG.md` and `MIGRATION_HISTORY.md`.
 
-## 1. Deploy (normal path)
-1. Code is merged to the branch for the tenant (`main-migrated`, `main-surfcity`, `main-corona`, `main-sanbernardino`).
-2. Bitbucket Pipeline builds the image -> pushes to ECR -> **one** `aws ssm send-command` to both nodes -> runs
-   `/opt/dealerpulse/deploy.sh <service> <branch>` -> automatic Cloudflare purge (`purge_everything`).
-3. Services: `ocean`, `integrations_service`, `chat_back` use docker compose; `website_frontend*`, `framework_frontend`
-   use `docker pull` / `rm -f` / `run`. A compose-level `logging:` change is dead for the latter two.
-4. Rules: never deploy the two nodes separately (cross-node chunk 404s). New `.env` var -> `docker compose up -d --no-deps`.
-   Stopping a Bitbucket run does **not** cancel an SSM command already dispatched. Avoid peak hours: frontend deploys give a
-   brief 502. Use `docker build --pull --no-cache` when proving a Next.js content fix.
-5. Verify after: both target groups healthy; ` 428 ` count in nginx log (canary, INCIDENTS #1); `cf-cache-status` MISS->HIT;
-   `docker ps` start times (the nodeA/nodeB gap should be ~0-1 s; old design had ~2.5 min).
-6. Revert: Surf City `revert-surfcity` custom pipeline (by 7-char SHA, verifies tag in ECR). Puente Hills: no revert pipeline.
-7. Known weakness: frontend and Django are replaced within seconds, so a deploy can race (INCIDENTS #1). Pending code fix.
+## 1. Deploy (normal path): full detail in skill `dealerships-deploy` and `knowledge/DEPLOY_FLOWS.md`
+1. Code is merged to the right branch: frontends `main-migrated` (Puente Hills), `main-surfcity`, `main-corona`, `main-sanbernardino`;
+   ocean, integrations_service, chat_back and framework_frontend use `main-migrated`. **Never push to `main`/`master`/`staging`** expecting nothing to
+   happen: legacy pipelines still deploy to old hosts.
+2. Bitbucket builds the image → ECR → SSM runs `/opt/dealerpulse/deploy.sh <service> <branch>`:
+   - frontends: both nodes in one command, then an automatic Cloudflare purge;
+   - **ocean: Node A automatic, then click the manual "Deploy to Node B" step;**
+   - integration services: the integration VM.
+3. Rules:
+   - Avoid US peak hours (frontend deploys give a brief 502 burst).
+   - A red pipeline step isn't proof of failure; check the node.
+   - Stopping a run doesn't cancel an SSM command already sent.
+   - A "dirty files" failure means someone edited the checkout on the VM; get the change into git, then re-run.
+4. Verify after:
+   - target groups healthy;
+   - ` 428 ` count per node (canary for blank pages);
+   - real content on the site;
+   - container start times close together on both nodes;
+   - for ocean, both nodes on the same image digest.
+5. Rollback: revert the commit on the same branch (pipeline redeploys), or re-run the previous good pipeline. `revert-surfcity` no longer exists on
+   production branches (removed 2026-10-01); there is no Puente Hills revert pipeline (user decision).
+
+## 1a. Blank pages after a deploy (428): approved fix only
+Evidence: the ` 428 ` count jumped in the deploy hour; the page shows header and footer with no content. With approval, restart only the affected
+frontend container(s): nodeA first, verify the 428 rate drops and content renders, then nodeB. Then purge Cloudflare (the user, in the dashboard, or the
+pipeline's purge step Redeploy button). Log it.
+
+## 1b. Change an `.env` value (approval)
+Back up `.env` **outside** the repo (for example `/opt/dealerpulse/backups/`), edit with a one-line `sed`, `diff` to show one line changed,
+confirm `git status --porcelain` is empty, then `docker compose up -d --no-deps <services>`. Verify inside the container that the variable is set,
+printing **set/not set only, never the value**. Deploys never touch `.env`, so the change persists. Example: the 2026-09-21 HomeNet TTL change (`knowledge/ISSUES_AWS_B.md` D-01).
 
 ## 2. Add a new dealership (standing 8-step pattern) `[doc]`
 Ask first: real hostname + who controls DNS; which pipeline pattern (single-branch vs per-branch `main-<name>`); real vendor IDs
@@ -34,9 +52,12 @@ Alarm states; ALB 5xx and target health (check the metric is scoped to the LoadB
 `docker ps` restart counts, `free -m`, `df -h /`, `docker stats --no-stream` on all three VMs via SSM; ` 428 ` count on
 `nisanwebsite-web-1` last hour; integration swap (expect trouble if `chat_back` runs 4 workers); cert expiry; dashboards over a short
 window; chatbot errors (OpenRouter 402). Log result in MIGRATION_HISTORY as a dated entry; templates: 2026-09-25, 10-01, 10-05.
-Commands: HANDOVER.md §7. Remember nginx is UTC, container logs `+0500`.
-SSM tip: write the command array to a JSON file and use `--parameters file://`; do not use inline `$(...)`.
-Git Bash mangles leading-`/` args: `export MSYS_NO_PATHCONV=1` or use PowerShell. A command blocked in Bash may succeed in PowerShell.
+Commands: skill `dealerships-monitoring` and `knowledge/ISSUES_AWS_B.md` section (a). Remember nginx is UTC, container logs `+0500`.
+SSM tips:
+- Write the command array to a JSON file and use `--parameters file://`; never inline `$(...)`.
+- The remote shell is `sh`, not bash.
+- Avoid `\|` in JSON; use `grep -E`.
+- Git Bash mangles leading-`/` arguments: `export MSYS_NO_PATHCONV=1`, or use PowerShell.
 
 ## 4. Reaching things
 - Nodes/integration: `aws ssm start-session --target <id>`; scripted: `aws ssm send-command --document-name AWS-RunShellScript`.
@@ -53,8 +74,9 @@ Verify with the API read, not the dashboard summary. Debug order for odd behavio
 HSTS window -> hotlink protection -> only then app bugs.
 
 ## 6. Add an admin IP / VPN client
-`MyUptimeIP <ip>` skill; `ConnectWireguardUI` skill. VPN peers are created in the browser (keypair uses `crypto.subtle`, which needs
-`localhost` or HTTPS). Never send the user to the IP directly.
+`MyUptimeIP <ip>` skill; `ConnectWireguardUI` skill. VPN peers are created in the browser by the operator (keypair uses `crypto.subtle`, which needs
+`localhost` or HTTPS). Never send the user to the IP directly. Check the generated config's `Endpoint` is `44.225.91.181:51820` (wg-easy still stores
+the old address); set `PersistentKeepalive = 25`. Easiest admin access: connect to the VPN (its exit IP is allowlisted for Kuma; SSH via `vpn-box`).
 
 ## 7. Logging templates
 COMMAND_LOG.md: heading with date, the exact command, the resulting ID, no paraphrase.

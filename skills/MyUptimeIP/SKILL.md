@@ -29,7 +29,13 @@ The user provides an IPv4 address, e.g. "MyUptimeIP 154.192.227.165" or "MyUptim
    ```
    allow 154.192.227.165;
    ```
-   Add a new `allow <IP>;` line inside the same block as the existing `allow` lines (do not duplicate if already present), keeping the deny-by-default structure intact. Back up the file first (`cp uptime.callingyounow.us uptime.callingyounow.us.bak-before-myuptimeip-<timestamp>`), then `nginx -t` before reloading, then `systemctl reload nginx` (or `nginx -s reload`).
+   Add a new `allow <IP>;` line inside the same block as the existing `allow` lines (do not duplicate if already present), keeping the deny-by-default structure intact.
+
+   **Two traps on this box (fixed 2026-10-13 after the 2026-09-24 incident, see `knowledge/ISSUES_AWS_B.md` V-11):**
+   - **Never write a backup inside `/etc/nginx/sites-enabled/`.** nginx loads every file in that folder, so a `.bak` there becomes live config and
+     breaks `nginx -t` (`"real_ip_header" directive is duplicate`). Backups go to `/etc/nginx/backups/`.
+   - `sites-enabled/uptime.callingyounow.us` is a **regular file, not a symlink**. Edit that file, then copy it over `sites-available/` to keep them in sync.
+   - Insert the new line **once** (after the first existing `allow` line). A plain `sed '/allow .../a ...'` appends after *every* match.
 
    Example of the full remote command (adjust `<IP>`):
    ```bash
@@ -37,13 +43,25 @@ The user provides an IPv4 address, e.g. "MyUptimeIP 154.192.227.165" or "MyUptim
    set -e
    FILE=/etc/nginx/sites-enabled/uptime.callingyounow.us
    TS=$(date +%Y%m%d-%H%M%S)
-   cp "$FILE" "${FILE}.bak-before-myuptimeip-${TS}"
-   grep -q "allow <IP>;" "$FILE" || sed -i "/allow [0-9.]*;/a\\        allow <IP>;" "$FILE"
-   nginx -t
-   systemctl reload nginx
-   grep <IP> "$FILE"
+   mkdir -p /etc/nginx/backups
+   cp "$FILE" "/etc/nginx/backups/uptime.callingyounow.us.bak-before-myuptimeip-${TS}"
+   if ! grep -q "allow <IP>;" "$FILE"; then
+     sed -i "0,/allow [0-9a-f.:\/]*;/s//&\n        allow <IP>;/" "$FILE"
+   fi
+   if nginx -t; then
+     systemctl reload nginx
+     cp "$FILE" /etc/nginx/sites-available/uptime.callingyounow.us
+   else
+     cp "/etc/nginx/backups/uptime.callingyounow.us.bak-before-myuptimeip-${TS}" "$FILE"
+     echo "nginx -t failed; original restored, nothing reloaded"; exit 1
+   fi
+   grep -c "allow <IP>;" "$FILE"
    EOF
    ```
+   The final count should be `1`. A failed reload never takes the site down (nginx keeps the running config), but restore the backup anyway.
+
+   **Durable alternative:** anyone connected to the team VPN already reaches the dashboard, because the VPN exit IP `44.225.91.181` is allowlisted.
+   On the VPN, SSH works through `vpn-box` (10.8.0.1) without any security-group rule.
 
 3. **Verify both changes landed** — re-describe the security group rule, and re-`cat`/`grep` the nginx file over SSH to confirm the new `allow` line is present and nginx reloaded cleanly.
 

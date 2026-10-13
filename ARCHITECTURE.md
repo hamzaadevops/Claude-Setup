@@ -1,7 +1,7 @@
 # ARCHITECTURE — how the platform works (the primary reference)
 
 **Operating stance: the system works and the business is happy with it. The goal is to keep it running as it is.**
-This document describes the architecture as built. It is not a plan. Improvements listed elsewhere (`STATUS.md`, `Documentations/TODO.md`)
+This document describes the architecture as built. It is not a plan. Improvements listed elsewhere (`STATUS.md`, `records/TODO.md`)
 are optional and only happen when someone asks for them. Provenance is `[doc]` (our records, last full review 2026-10-13) unless marked otherwise.
 
 ---
@@ -81,15 +81,20 @@ and RSC requests. 30-day static-asset cache (matches by file extension). `/_next
 why ALB stickiness cannot work and is off. Full purge after every frontend deploy. Details: skill `dealerships-edge-cloudflare`.
 
 ### 4.2 Load balancer
-`dealerpulse-alb`, listener 443 default action = weighted forward to two per-node target groups (weights: verify; docs say 35/65 since
-2026-09-14 and 50/50 in HANDOVER). Health check `/` with matcher `200-499` (no dedicated health endpoint exists). The detached
-`dealerpulse-tg-nginx` is kept as an instant-rollback target group.
+`dealerpulse-alb`, listener 443 default action = weighted forward to two per-node target groups, **35 nodeA / 65 nodeB** (set 2026-09-14, re-confirmed
+in history 2026-09-21; `HANDOVER.md` says 50/50, so verify live). No stickiness. Health check `GET /` with matcher `200-499`: it reaches nginx and
+gunicorn (which answers 400), **not** the Next.js containers, so a dead frontend container is invisible to the ALB. No dedicated health endpoint
+exists; don't flip the matcher to `200` (it would take the site down). The detached `dealerpulse-tg-nginx` is the instant-rollback target group: keep it.
+Site-wide metrics use the LoadBalancer dimension `app/dealerpulse-alb/dc80177beaa3aa2f`.
 
 ### 4.3 Web nodes (nodeA us-west-2a, nodeB us-west-2b, t3.large)
-Identical. Host nginx terminates TLS (Let's Encrypt or self-signed per host; renewed by `certbot.timer`), applies `limit_conn 300`
-(exempting `?_rsc=` prefetches, status 429), raised fd limits, and proxies by `server_name` to loopback-only containers:
-`nisanwebsite-web-1` (gunicorn :9000), `-worker-1`, `-beat-1`, a Redis, and one `website_frontend*` container per tenant
-(Puente Hills :3000, Surf City :3001; Corona and San Bernardino ports: read from the vhosts).
+Identical by intent. Host nginx terminates TLS: a **self-signed** cert for the website hosts (`phn`, `www.puentehillsnissan.com`, `surfcity`, ...)
+by design (works because Cloudflare SSL mode is Full and the ALB doesn't validate), and Let's Encrypt for `api` (DNS-01 via `certbot-dns-cloudflare`,
+token in SSM `/dealerpulse/shared/cloudflare-dns-token`). It applies rate limits (`limit_req` 50 r/s burst 150, `limit_conn 300` exempting `?_rsc=`
+prefetches, rejections as 429), `real_ip` from the VPC and Cloudflare ranges, raised fd limits, and a `combined_host` log format with `host=` and `rt=`.
+It proxies by `server_name` to loopback-only containers: `nisanwebsite-web-1` (gunicorn :9000, 3 workers × 4 threads, timeout 60 s), `-worker-1`,
+`-beat-1`, a Redis, and one `website_frontend*` container per tenant (Puente Hills :3000, Surf City :3001, Corona :3002, San Bernardino: read the
+port from the box; its deploy.sh case is newer than our copies).
 **Redis is per node** by design. It holds content-keyed caches only (HomeNet inventory per tenant: db2 Surf City, db6 Puente Hills, db11 Corona,
 db12 San Bernardino). Sessions are DB-backed and auth is stateless JWT, so either node can serve any request.
 
@@ -103,8 +108,12 @@ Its 5432/6379 accept only the web nodes' SG.
 - **API encryption:** with `API_CRYPTO_MODE=required`, every `/api/*` response is AES-256-GCM encrypted per response. Unsigned clients get
   `428 crypto_key_required`. The frontend bootstraps a crypto session against `/api/crypto/public-key/`. Consequence: API responses are never
   edge-cacheable, and you cannot probe the API with plain curl.
-- **Scheduled work (Celery beat, runs on both nodes):** HomeNet inventory warm (twice daily) with a 2-hour cache TTL; JD Power rebates;
-  Podium review sync every 2 h at :15. Inventory comes from HomeNet (SOAP + image CDN `content.homenetiol.com`).
+- **Scheduled work (Celery beat, runs on both nodes, so tasks run twice):** HomeNet inventory warm **3× a day at 01:00, 15:00 and 20:00 UTC**
+  (a business requirement) with cache TTL `HOMENET_CACHE_TTL_SECONDS=72000` (20 h, set 2026-09-21 to end a 2-hourly cache stampede; it lives in
+  `.env`, which deploys don't touch). Also JD Power rebate enrichment (15 threads; can exhaust Postgres connections after the 20:00 warm),
+  `detect_sold_inventory` 03:00 UTC, and Podium review sync every 2 h at :15. Inventory comes from HomeNet (SOAP + image CDN `content.homenetiol.com`).
+- **Content edits:** the admin dashboard's "revalidate" reaches only one node (per-node Next.js ISR cache), so a CMS edit can show on one node
+  before the other until the page's ISR window passes.
 - **Build-time data:** the Next.js build fetches site config from the live backend; if the backend is unreachable during a build, fallback
   branding is baked in ("Surf City Nissan" is the tell).
 - Django `TIME_ZONE` is `Asia/Karachi` (deliberate). Container logs show +0500; nginx and CloudWatch use UTC.
@@ -117,9 +126,13 @@ Its 5432/6379 accept only the web nodes' SG.
 - WAF managed ruleset (Block) and the country allow-list are zone-wide on `callingyounow.us`.
 
 ### 4.7 Delivery
-Bitbucket Pipelines per branch (`main-migrated` = Puente Hills and shared services; `main-surfcity`; `main-corona`; `main-sanbernardino`) ->
-build image -> ECR (`<sha>`, `latest`, `latest_<tenant>`) -> **one** SSM command to both nodes running `/opt/dealerpulse/deploy.sh <service> <branch>`
--> Cloudflare purge. Details: skill `dealerships-deploy`.
+Bitbucket Pipelines per branch (`main-migrated` = Puente Hills frontend and all shared services; `main-surfcity`; `main-corona`; `main-sanbernardino`)
+-> build image -> ECR (`<sha7>`, `latest`, `<sha7>-<tenant>`, `latest_<tenant>`) -> SSM `/opt/dealerpulse/deploy.sh <service> <branch>`:
+- **frontends:** one SSM command to both nodes at once, then an automatic Cloudflare `purge_everything` (the callingyounow.us purge clears the whole zone);
+- **ocean:** Node A automatic, **Node B a manual step** in Bitbucket;
+- **integration services:** one SSM command to the integration VM.
+`deploy.sh` refuses to run on a dirty git checkout. Legacy pipelines on `main`/`master`/`staging` branches still deploy to the old DigitalOcean hosts.
+Details: skill `dealerships-deploy` and `knowledge/DEPLOY_FLOWS.md`.
 
 ### 4.8 Observability and backups
 CloudWatch agent (memory/disk/swap), log groups `/dealerpulse/*`, dashboards `DealerPulse-Fleet-Overview` / `-Logs` / `-Per-VM`, 7 alarms ->
@@ -131,7 +144,8 @@ Backups: DLM EBS snapshots targeted by the `Project=dealerpulse` tag; S3 `dealer
 ## 5. Invariants: do not change these (they hold the system together)
 
 1. Resource names `dealerpulse-*`, the `Project=dealerpulse` tag, `/opt/dealerpulse/*` paths.
-2. Both nodes always run the same image; deploys hit both nodes in one SSM call, then purge Cloudflare.
+2. Both nodes run the same frontend image: frontend deploys hit both nodes in one SSM call, then purge Cloudflare. (ocean's Node B is a manual
+   step; click it promptly so both nodes run the same backend.)
 3. Every node has a vhost and a cert for every hostname the ALB can send it.
 4. A node carries only `dealerpulse-sg-merged`; origin stays locked to Cloudflare -> ALB.
 5. ALB stickiness off; Cloudflare `strip_set_cookie` and the RSC-header cache exclusion stay.
@@ -139,11 +153,17 @@ Backups: DLM EBS snapshots targeted by the `Project=dealerpulse` tag; S3 `dealer
 7. Health-check matcher stays `200-499` until a real health endpoint exists.
 8. Zone-wide "Cache Everything [Template]" rule stays disabled.
 9. Redis per node; TIME_ZONE `Asia/Karachi`; alarm thresholds as calibrated.
-10. `.env` changes are applied with `docker compose up -d --no-deps <svc>`; local override files on hosts (e.g. ocean's `docker-compose.override.yml`) must survive deploys.
+10. `.env` changes are applied with `docker compose up -d --no-deps <svc>` (never `restart`). Deploy directories on the VMs are git checkouts:
+    never edit tracked files there or leave backups inside them (deploy.sh refuses a dirty tree); `.env` is gitignored, so keep its backups outside the repo.
+11. Cloudflare SSL mode stays **Full** (not Strict, not Flexible): origin certs are self-signed by design.
+12. Never `docker volume prune` on the integration VM (a kept volume holds a real database); on nodes use dangling-only `docker image prune -f`.
 
 ## 6. Accepted trade-offs (known, deliberately left as they are)
 - Shared Postgres on the integration VM is a single point of failure.
-- Frontend deploys give a short 502 window; no blue/green on the nodes.
+- Frontend deploys give a short 502 burst (about 20-50 requests); no blue/green on the nodes ("cost complexity").
+- Every frontend server-side render calls the API through the public internet (the "hairpin"); about half of ALB requests are internal.
+- Unmatched paths redirect to the homepage (soft-404) on purpose. The media bucket is public-read without CloudFront.
+- Legacy pipelines to the old DigitalOcean hosts stay until those hosts are decommissioned.
 - The country allow-list could block a vendor callback from outside US/CA/PK/JP.
 - Celery beat runs on both nodes (duplicate schedules).
 - Kuma runs in the same AWS account/region it monitors.

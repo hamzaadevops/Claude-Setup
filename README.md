@@ -18,8 +18,11 @@ Single source of truth for any engineer or Claude agent working on:
 | `STATUS.md` | Watch-list (optional improvements), closed decisions, open questions |
 | `DEALERPULSE.md` | The DigitalOcean product in detail |
 | `CONTEXT.md` | History and timeline |
+| `START_HERE.md` | Guide for the engineer taking over (not necessarily a DevOps specialist) |
 | `skills/` | Topic skills that feed an agent the right context on demand |
-| `memory-export/` | Earlier detailed notes (reference only) |
+| `knowledge/` | Deep reference: `DEPLOY_FLOWS.md`, `ISSUES_AWS_A.md`, `ISSUES_AWS_B.md`, `DEALERPULSE_OPS.md` (every flow and past issue, with citations) |
+| `records/` | Original evidence: migration history, command log, handover, monitoring, VPN, DealerPulse docs, deploy-script copies (no secrets) |
+| `memory-export/` | Earlier session notes (reference only) |
 
 ## Skills
 | Skill | Triggers on |
@@ -32,6 +35,7 @@ Single source of truth for any engineer or Claude agent working on:
 | `dealerships-troubleshooting` | anything reported broken or slow |
 | `team-vpn-and-uptime` | VPN, US exit IP, Kuma, VPN box, RDP box |
 | `dealerpulse-digitalocean` | DealerPulse product, droplet, DO database, legacy hosts |
+| `dealerships-onboarding` | new operator, "explain", plain-language guidance |
 | `ConnectWireguardUI` | open the wg-easy UI / add a VPN client (action) |
 | `MyUptimeIP` | allowlist an admin IP on the VPN box (action) |
 

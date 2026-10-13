@@ -1,0 +1,75 @@
+# Uptime Kuma — team VPN VM (i-0ad5d9743f6c95721, t4g.micro, arm64/Graviton, us-west-2)
+#
+# DEPLOYED 2026-09-18 and verified healthy. arm64 manifest confirmed before pull.
+# Running version 2.5.5. Pinned by tag AND digest below so a re-pull can never
+# silently change the running version — upgrades are now a deliberate edit.
+#
+# NOTE: this box's ubuntu user is not in the docker group, so every
+# `docker`/`docker compose` command here needs sudo.
+# Compose project name is `ubuntu` (derived from ~), so run compose commands
+# from the home directory or pass -p explicitly.
+#
+# This box is 1 GiB total and its actual job is wg-easy (the team VPN).
+# Monitoring must never be the reason the VPN dies — hence the tight limits.
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.5.5@sha256:c74379ac4509ce2d2c2633f509e67003ee2e45b6e995c5e43fc101f45a0e1fbe
+    container_name: uptime-kuma
+    restart: unless-stopped
+
+    # Localhost-only. The SG allows 22 from one admin IP and nothing else,
+    # so reach the UI the same way as wg-easy's wizard:
+    #   ssh -i ~/.ssh/team-vpn -L 3001:127.0.0.1:3001 ubuntu@44.225.91.181
+    # then open http://localhost:3001
+    # Do NOT publish this on 0.0.0.0 — Kuma holds notification creds and monitor targets.
+    ports:
+      - "127.0.0.1:3001:3001"
+
+    volumes:
+      - uptime-kuma-data:/app/data
+
+    environment:
+      # Timestamps, maintenance windows and status-page times in team-local time
+      - TZ=Asia/Karachi
+
+    # Explicit public resolvers, added 2026-09-18.
+    # Default chain was 3 hops: container -> Docker embedded DNS (127.0.0.11)
+    # -> host systemd-resolved (127.0.0.53) -> VPC resolver. systemd-resolved is a
+    # known source of intermittent resolution stalls inside containers, and a stalled
+    # lookup surfaces as ETIMEDOUT / "socket hang up" — indistinguishable in the Kuma
+    # event log from a genuinely down target. This collapses it to one hop.
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+    # CORRECTED 2026-09-18 — the original 256m was TOO TIGHT and caused the
+    # false "Down" alerts. Kuma sat at 231MiB/256MiB (90%), the cgroup hit its
+    # max 1,583 times, the kernel OOM-killed it 12 times, and critically
+    # `memory.events` showed sock_throttled=996: under cgroup memory pressure the
+    # kernel throttles SOCKET BUFFER allocation, so outbound HTTP checks stall and
+    # drop. That surfaces as "socket hang up" / "ETIMEDOUT" / "timeout of 48000ms"
+    # across ALL monitors at once, regardless of whether the targets are healthy.
+    # REQUIRES the 2 GB swapfile (see UPTIME_MONITORING_SETUP.md) — this box has
+    # 904 MiB total and zero swap, so raising the ceiling without swap would let
+    # the OOM killer take wg-easy and drop the team VPN.
+    mem_limit: 512m
+    mem_reservation: 192m
+    cpus: 0.5
+
+    security_opt:
+      - no-new-privileges:true
+
+    # CONFIRMED 2026-09-18: the image ships a working HEALTHCHECK - the container reports
+    # "(healthy)" with no override here. Do not add one back.
+
+    # 50m x 5 = 250 MB of logs on a small root volume. 10m x 3 is plenty.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  uptime-kuma-data:
+    name: uptime-kuma-data

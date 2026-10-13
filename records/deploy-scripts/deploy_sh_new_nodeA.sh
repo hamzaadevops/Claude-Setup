@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+# Reusable deploy script for DealerPulse services.
+#
+# Usage: ./deploy.sh <service> <branch> [tag]
+#   ./deploy.sh ocean staging
+#   ./deploy.sh website_frontend staging
+#   ./deploy.sh website_frontend_surfcity main-surfcity
+#   ./deploy.sh website_frontend_surfcity main-surfcity 1ed35a8-surfcity   # revert: redeploy an existing ECR tag, no rebuild
+#   ./deploy.sh integrations_service master
+#   ./deploy.sh chat_back main
+#   ./deploy.sh framework_frontend staging
+#
+# Aliases: backend->ocean, frontend->website_frontend, surfcity->website_frontend_surfcity,
+#          leads/leads_backend->integrations_service, chat/chat_backend->chat_back,
+#          admin/admin_dashboard->framework_frontend
+#
+# Only works for the service(s) that actually live on THIS VM (ocean/website_frontend/
+# website_frontend_surfcity on Node A+B; integrations_service/chat_back/framework_frontend on
+# the Integrations VM) -- running the wrong service name on the wrong box fails with a clear
+# error, not silently.
+#
+# Optional 3rd arg [tag] is currently only honored by the website_frontend_surfcity case --
+# it pins the ECR image tag to redeploy verbatim (must already exist in ECR, nothing is
+# rebuilt) instead of the default :latest_surfcity. Used by the "revert-surfcity" custom
+# pipeline. Every other service ignores a 3rd arg entirely -- this must never change their
+# behavior, especially website_frontend (Puente Hills), which shares this VM.
+
+set -euo pipefail
+
+SERVICE_INPUT="${1:?Usage: $0 <service> <branch> [tag]}"
+BRANCH="${2:?Usage: $0 <service> <branch> [tag]}"
+TAG_OVERRIDE="${3:-}"
+
+case "$SERVICE_INPUT" in
+  ocean|backend|nisanweb-backend) SERVICE=ocean ;;
+  website_frontend|frontend) SERVICE=website_frontend ;;
+  website_frontend_surfcity|surfcity) SERVICE=website_frontend_surfcity ;;
+  website_frontend_corona|corona) SERVICE=website_frontend_corona ;;
+  integrations_service|leads|leads_backend) SERVICE=integrations_service ;;
+  chat_back|chat|chat_backend) SERVICE=chat_back ;;
+  framework_frontend|admin|admin_dashboard) SERVICE=framework_frontend ;;
+  *)
+    echo "Unknown service '$SERVICE_INPUT'." >&2
+    echo "Known: ocean, website_frontend, website_frontend_surfcity, website_frontend_corona, integrations_service, chat_back, framework_frontend" >&2
+    echo "Aliases: backend, frontend, surfcity, corona, leads, chat, admin" >&2
+    exit 1
+    ;;
+esac
+
+log() { echo "[deploy][$SERVICE] $*"; }
+
+case "$SERVICE" in
+  ocean)
+    DIR=/opt/dealerpulse/backend/ocean
+    KEY=/opt/dealerpulse/backend/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:9000/api/
+    ;;
+  website_frontend)
+    DIR=/opt/dealerpulse/frontend/website_frontend
+    KEY=/opt/dealerpulse/backend/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:3000/
+    ;;
+  website_frontend_surfcity)
+    # Same repo/branch as website_frontend -- a second checkout in its own directory so its
+    # git state (and any local .env) stays fully independent of the Puente Hills deployment.
+    DIR=/opt/dealerpulse/frontend/website_frontend_surfcity
+    KEY=/opt/dealerpulse/backend/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:3001/
+    ;;
+  website_frontend_corona)
+    DIR=/opt/dealerpulse/frontend/website_frontend_corona
+    KEY=/opt/dealerpulse/backend/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:3002/
+    ;;
+  integrations_service)
+    DIR=/opt/dealerpulse/leads/integrations_service
+    KEY=/opt/dealerpulse/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:8129/health
+    ;;
+  chat_back)
+    DIR=/opt/dealerpulse/chat/chat_back
+    KEY=/opt/dealerpulse/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:9002/health
+    ;;
+  framework_frontend)
+    DIR=/opt/dealerpulse/framework/framework_frontend
+    KEY=/opt/dealerpulse/.ssh/id_ed25519
+    CHECK_URL=http://127.0.0.1:3003/
+    ;;
+esac
+
+if [ ! -d "$DIR" ]; then
+  echo "ERROR: $DIR does not exist on this host. Wrong VM for '$SERVICE'?" >&2
+  exit 1
+fi
+if [ ! -f "$KEY" ]; then
+  echo "ERROR: deploy key $KEY not found on this host." >&2
+  exit 1
+fi
+
+cd "$DIR"
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "ERROR: $DIR has uncommitted or untracked changes -- refusing to auto-stash and switch branches." >&2
+  echo "(This used to silently stash-and-never-restore, which has caused real data loss before -- see COMMAND_LOG.md.)" >&2
+  echo "Dirty files:" >&2
+  git status --short >&2
+  echo "Resolve manually (commit it, discard it, or move it outside this repo directory) before retrying the deploy." >&2
+  exit 1
+fi
+
+log "Fetching and checking out '$BRANCH'..."
+export GIT_SSH_COMMAND="ssh -i $KEY -o UserKnownHostsFile=/root/.ssh/known_hosts -o StrictHostKeyChecking=accept-new"
+git fetch origin
+git checkout "$BRANCH"
+git pull origin "$BRANCH"
+COMMIT="$(git log -1 --oneline)"
+log "Now at: $COMMIT"
+
+case "$SERVICE" in
+  ocean)
+    log "Logging into ECR and pulling the image built by ocean's own pipeline..."
+    # Built and pushed to ECR by ocean's own bitbucket-pipelines.yml (a separate step,
+    # before this script runs via SSM) -- nothing to build locally here.
+    # --no-deps: web/worker/beat depend_on db, which would otherwise get auto-started --
+    # both nodes now use the shared Postgres on the Integrations VM, neither runs a local db.
+    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 409289617504.dkr.ecr.us-west-2.amazonaws.com
+    docker compose pull web worker beat
+    docker compose up -d --no-deps web worker beat
+    ;;
+  integrations_service|chat_back)
+    log "Logging into ECR and pulling the image built by the service's own pipeline..."
+    # These two services are built and pushed to ECR by their own bitbucket-pipelines.yml
+    # (a separate step, before this script runs via SSM) -- nothing to build locally here.
+    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 409289617504.dkr.ecr.us-west-2.amazonaws.com
+    docker compose pull
+    docker compose up -d
+    ;;
+  website_frontend)
+    log "Logging into ECR and pulling the image built by website_frontend's own pipeline..."
+    # Built and pushed to ECR by website_frontend's own bitbucket-pipelines.yml
+    # (build-time NEXT_PUBLIC_* secrets are pipeline variables there, not read from a
+    # local .env anymore) -- nothing to build locally here.
+    ECR_IMAGE=409289617504.dkr.ecr.us-west-2.amazonaws.com/website-frontend:latest
+    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 409289617504.dkr.ecr.us-west-2.amazonaws.com
+    docker pull "$ECR_IMAGE"
+    docker rm -f website_frontend 2>/dev/null || true
+    docker run -d --name website_frontend --restart unless-stopped --log-driver awslogs --log-opt awslogs-region=us-west-2 --log-opt awslogs-group=/dealerpulse/website-frontend --log-opt awslogs-stream=$(hostname)-website-frontend --log-opt awslogs-create-group=false -p 127.0.0.1:3000:3000 "$ECR_IMAGE"
+    ;;
+  website_frontend_surfcity)
+    log "Logging into ECR and pulling the image built by website_frontend's own pipeline (surfcity tag)..."
+    # Same ECR repo as Puente Hills, distinct tag (:latest_surfcity, or a pinned TAG_OVERRIDE
+    # for a revert) built by a separate pipeline step (deployment: aws-prod-surfcity) with
+    # Surf City's own NEXT_PUBLIC_* build args. Distinct container name, host port, and log
+    # stream from Puente Hills' instance -- this must never collide with the website_frontend
+    # case above.
+    if [ -n "$TAG_OVERRIDE" ]; then
+      log "TAG_OVERRIDE set -- reverting to pinned tag '$TAG_OVERRIDE' (image must already exist in ECR, nothing is rebuilt)."
+      ECR_IMAGE="409289617504.dkr.ecr.us-west-2.amazonaws.com/website-frontend:$TAG_OVERRIDE"
+    else
+      ECR_IMAGE=409289617504.dkr.ecr.us-west-2.amazonaws.com/website-frontend:latest_surfcity
+    fi
+    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 409289617504.dkr.ecr.us-west-2.amazonaws.com
+    docker pull "$ECR_IMAGE"
+    docker rm -f website_frontend_surfcity 2>/dev/null || true
+    docker run -d --name website_frontend_surfcity --restart unless-stopped --log-driver awslogs --log-opt awslogs-region=us-west-2 --log-opt awslogs-group=/dealerpulse/website-frontend --log-opt awslogs-stream=$(hostname)-website-frontend-surfcity --log-opt awslogs-create-group=false -p 127.0.0.1:3001:3000 "$ECR_IMAGE"
+    ;;
+  website_frontend_corona)
+    log "Logging into ECR and pulling the image built by website_frontend's own pipeline (corona tag)..."
+    ECR_IMAGE=409289617504.dkr.ecr.us-west-2.amazonaws.com/website-frontend:latest_corona
+    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 409289617504.dkr.ecr.us-west-2.amazonaws.com
+    docker pull "$ECR_IMAGE"
+    docker rm -f website_frontend_corona 2>/dev/null || true
+    docker run -d --name website_frontend_corona --restart unless-stopped --log-driver awslogs --log-opt awslogs-region=us-west-2 --log-opt awslogs-group=/dealerpulse/website-frontend --log-opt awslogs-stream=$(hostname)-website-frontend-corona --log-opt awslogs-create-group=false -p 127.0.0.1:3002:3000 "$ECR_IMAGE"
+    ;;
+  framework_frontend)
+    log "Logging into ECR and pulling the image built by the service's own pipeline..."
+    # Built and pushed to ECR by framework_frontend's own bitbucket-pipelines.yml
+    # (build-time VITE_* secrets are pipeline variables there, not read from a local .env
+    # anymore) -- nothing to build locally here.
+    ECR_IMAGE=409289617504.dkr.ecr.us-west-2.amazonaws.com/admin-dashboard:latest
+    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 409289617504.dkr.ecr.us-west-2.amazonaws.com
+    docker pull "$ECR_IMAGE"
+    docker rm -f framework-frontend 2>/dev/null || true
+    docker run -d --name framework-frontend --restart unless-stopped -p 127.0.0.1:3003:80 "$ECR_IMAGE"
+    ;;
+esac
+
+log "Waiting for health check..."
+STATUS="000"
+for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24; do
+  sleep 5
+  STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$CHECK_URL" 2>/dev/null || true)"
+  [ -z "$STATUS" ] && STATUS="000"
+  case "$STATUS" in
+    2??|3??|4??) break ;;
+  esac
+  log "Attempt $attempt/24: HTTP $STATUS -- not up yet, retrying..."
+done
+log "Health check ($CHECK_URL): HTTP $STATUS"
+
+case "$STATUS" in
+  2??|3??|4??)
+    log "Deploy of $SERVICE ($BRANCH, $COMMIT) complete."
+    ;;
+  *)
+    log "WARNING: health check did not return a normal HTTP status after 24 attempts (got $STATUS)."
+    log "Check logs: docker compose logs   (or)   docker logs <container-name>"
+    exit 1
+    ;;
+esac
+

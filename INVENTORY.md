@@ -16,14 +16,15 @@ All `[doc]` unless marked; sources: HANDOVER.md, TENANTS_PUENTE_HILLS_SURF_CITY.
 | SG nodes | `sg-0587ebfd9dd3a52a7` (`dealerpulse-sg-merged`): 80/443 from sg-alb only. A node must carry **only** this SG |
 | SG integration | `sg-097c63c5851f32550`: 80/443 Cloudflare only; 5432/6379 from sg-merged only |
 | SG VPN | `team-vpn-sg` `sg-020165aeddafe5322` (22 from admin IP only) |
-| ALB | `dealerpulse-alb`, DNS `dealerpulse-alb-158980700.us-west-2.elb.amazonaws.com`; TGs `dealerpulse-tg-nodea`, `-nodeb`; `-nginx` detached (rollback). Weighting: **HANDOVER says 50/50, TENANTS doc says 35/65 since 09-14. Conflict: verify** |
+| ALB | `dealerpulse-alb`, DNS `dealerpulse-alb-158980700.us-west-2.elb.amazonaws.com`; TGs `dealerpulse-tg-nodea`, `-nodeb`; `-nginx` detached (rollback; keep). Weighting **35 nodeA / 65 nodeB** per history (2026-09-14, 09-21); HANDOVER says 50/50, so verify. Metrics dimension `LoadBalancer=app/dealerpulse-alb/dc80177beaa3aa2f` |
 | ECR | `nisanweb-backend`, `leads-backend`, `chat-backend`, `website-frontend`, `admin-dashboard` (lifecycle policies 2026-10-03, JSON in `Migration/ecr-lifecycle/`). Tags: `latest`, `latest_surfcity`, commit SHA |
 | S3 | `dealerpulse-media-409289617504`, `dealerpulse-backups-409289617504` (media via EC2 role, no static keys) |
 | IAM | `dealerpulse-ec2-ssm-role`, `dealerpulse-dlm-role`, `dealerpulse-chatbot-role`, `dealerpulse-developers-readonly`, `dealerpulse-sr-developers-readwrite`, CI/CD user `dealerpulse-cicd-bitbucket` |
 | Alerts | SNS `dealerpulse-alerts` -> AWS Chatbot -> Slack `#aws-alerts-dealerpulse` (workspace "Nexrupt Tech"). Don't recreate Chatbot casually |
 | Logs/metrics | CloudWatch log groups `/dealerpulse/*` (9); dashboards `DealerPulse-Fleet-Overview`, `-Logs`, `-Per-VM`; namespace `DealerPulse/nginx`; CWAgent metrics live since 2026-09-15 |
 | SSM params | `/dealerpulse/shared/postgres-superuser-password`, `/dealerpulse/shared/ocean-db-password` (SecureString) |
-| Alarms (7, all OK on 10-05) | ALB 5xx (gated), per-node target health, CPU credits, `dealerpulse-alb-latency-p99`, nginx fd-exhaustion (deleted once; verify it exists) |
+| Alarms (7, all OK on 10-05) | `dealerpulse-alb-5xx-rate-fast` / `-burn`, per-node target health, CPU credits, `dealerpulse-alb-latency-p99` (fd-exhaustion alarm was deleted on purpose 09-14; metric filter remains) |
+| Backups (VPN box) | DLM `policy-01e45e775632d7de9` on volume tag `Project=team-vpn` (daily 03:30 UTC, keep 7). Only backup of the VPN peers |
 | Tags | `Project=dealerpulse`, `Environment=production`, `ManagedBy=cli-manual`; DLM snapshots target the Project tag |
 | EBS | encryption by default ON; EC2 serial console access enabled |
 
@@ -42,8 +43,8 @@ All `[doc]` unless marked; sources: HANDOVER.md, TENANTS_PUENTE_HILLS_SURF_CITY.
 |---|---|---|---|---|
 | Puente Hills Nissan | `www.puentehillsnissan.com` (+ `phn.callingyounow.us`) | `website_frontend` :3000 | `latest` | `main-migrated` |
 | Surf City Nissan | `surfcity.callingyounow.us` | `website_frontend_surfcity` :3001 | `latest_surfcity` | `main-surfcity` |
-| Corona Nissan | **migrated per user (2026-10-13; exact date and hostname not recorded, verify live)**; container running since ~09-26 | `website_frontend_corona` | n/a | `main-corona` |
-| Nissan of San Bernardino | pending cutover (up since ~10-03) | `website_frontend_sanbernardino` | n/a | `main-sanbernardino` |
+| Corona Nissan | **migrated per user (2026-10-13; exact date and hostname not recorded, verify live)**; container running since ~09-26 | `website_frontend_corona` :3002 | `latest_corona` | `main-corona` (env `aws-prod-corona`) |
+| Nissan of San Bernardino | frontend on both nodes since ~10-03; public domain cutover status unverified | `website_frontend_sanbernardino` (port: read from box) | `latest_sanbernardino` | `main-sanbernardino` (env `aws-prod-sanbernardino`) |
 
 Our own hostnames (`callingyounow.us`): `phn.`, `api.` (ALB, encrypted API), `admin.`, `chat.`, `leads.` (integration VM, Cloudflare-proxied nginx), `uptime.` (Kuma). Dealership IDs (CMS): Surf City `c3e9748b-353d-49b7-9599-86a3ba314fa2`.
 Keyword monitors use street address: Puente Hills `17320 Gale Ave`, Surf City `17331 Beach Blvd`.
@@ -72,6 +73,6 @@ OpenRouter (chatbot LLM), HomeNet (inventory SOAP + image CDN `content.homenetio
 Hamza (DevOps, owner of this account). Mudassar (addressee of `DealerPulse/SMS_ISSUE_MUDASSAR.md`). Ghulam Ali (was given the proposed frontend ChunkLoadError handler; role not stated). A CTO and a senior backend dev receive the user's relayed findings. Roles beyond that are not recorded; ask.
 
 ## 9. Workspace layout (expected)
-`Documents\Claude-Setup` (this pack), `Documents\Documentations` (detailed records), and the application repos cloned under `Documents\`:
+`Documents\Claude-Setup` (this pack), `Claude-Setup\records` (detailed records), and the application repos cloned under `Documents\`:
 `ocean`, `website_frontend`, `integrations_service`, `chat_back`, `framework_frontend`, `dp_backend_v2`, `dp_frontend_v2`, `starfish`.
 Secrets, env files and database dumps are never stored in the pack or the docs.
