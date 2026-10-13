@@ -54,8 +54,4 @@ Report in plain language (what I checked · what it means · what to do). Append
 
 ## Time and dates
 - nginx and CloudWatch are **UTC**. Django container log text is **+0500**. The team is in PKT (UTC+5); dealerships are in California (UTC-7/-8).
-- **Domain registrations** (not owned by us; renewal is a CTO question):
-  - surfcitynissan.com 2026-11-12
-  - coronanissan.com 2026-11-21
-  - puentehillsnissan.com 2026-12-11
-  - Raise these if they're near.
+- **Domain registrations** are not ours, and the user chose to leave them (2026-10-13). This is for information only; don't raise it in sweeps.

@@ -106,4 +106,4 @@ Paths: docs = `Claude-Setup\records\`, this pack = `Documents\Claude-Setup\`, re
 | "VPN SSH not working" | Admin IP changed -> SG `team-vpn-sg` `sg-020165aeddafe5322` port 22 rule; or you're on the VPN and used the public alias (use `wg-ui-vpn`) |
 | "RDP box" | RDP port **10025**, SSH 22. Slow = CPU (27x), not network. Fix is a bigger box (>=4 vCPU, >=8 GB) |
 | "DealerPulse droplet" | **Ask before logging in.** `ssh dealerpulse`. `DEALERPULSE.md` |
-| "Database exposed / Trusted Sources" | DealerPulse managed Postgres finding, highest severity, needs approval (DEALERPULSE.md §3) |
+| "Database exposed / Trusted Sources" | DealerPulse managed Postgres finding. Known and left as-is by user decision (2026-10-13, `STATUS.md` §3): explain the facts if asked; don't push a fix |

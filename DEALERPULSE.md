@@ -10,8 +10,8 @@ usually the backend team (Mudassar is the named contact on the SMS issue).
 - **Host:** droplet `146.190.132.236`, hostname `Surfcity-Live`, sfo3, 2 vCPU / 8 GB, no swap. SSH alias `dealerpulse`.
 - **Apps:** `app.dealerpulse.cloud` (frontend :8014) and `app.backend.dealerpulse.cloud` (daphne :8004 blue / :8006 green). Celery worker and beat; Redis.
   The unrelated `callingyounow` product shares the box. DNS at Hostinger, no CDN.
-- **Database:** DO Managed Postgres `dp2-live` (:25060, `defaultdb`, user `doadmin`), 1 node. **Trusted Sources off; the `doadmin` password was exposed in a
-  transcript on 2026-09-18 → rotate.** Droplet snapshots don't cover app data.
+- **Database:** DO Managed Postgres `dp2-live` (:25060, `defaultdb`, user `doadmin`), 1 node. Trusted Sources off and `doadmin` used by the app (known;
+  left as-is by user decision 2026-10-13, see `STATUS.md` §3). Droplet snapshots don't cover app data.
 - **Deploy:** backend `main` → Docker Hub → automatic blue/green with a health gate; frontend `main` → plain recreate. Staging is on the legacy `combined` droplet.
 - **Health:** `/health/ready/` and `/health/live/` should both return 204. The homepage is not proof. Kuma has DealerPulse monitors.
 - **Known issues:**

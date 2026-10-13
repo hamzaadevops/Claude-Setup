@@ -43,9 +43,8 @@ Records: `records/DealerPulse/`. **Ask before logging in to or probing the dropl
 | Kuma beat/worker down | worker and beat have no restart policy (I-10) | backend team |
 
 ## Top risks (don't act alone)
-1. **The DB is reachable from the internet (Trusted Sources off), and the app uses the superuser.** The `doadmin` password was printed into a transcript on
-   2026-09-18, so **treat it as exposed and rotate it**. Fix order: enable Trusted Sources for the droplet (DO panel) → least-privilege role → rotate.
-   Needs the DO account holder, the backend team and the CTO.
+1. The DB is reachable from the internet (Trusted Sources off), the app uses the superuser, and the `doadmin` password appeared in a transcript on
+   2026-09-18. **Known and left as-is by user decision (2026-10-13):** explain it if asked, but don't raise it or propose fixes unprompted.
 2. Single points of failure: one droplet, one DB node, backups never restore-tested, media only in the droplet snapshot.
 3. Unauthenticated webhooks; SSH and the droplet's own Postgres (:5432) open to the world (`pg_hba` restricted).
 

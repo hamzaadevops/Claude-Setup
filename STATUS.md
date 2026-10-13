@@ -1,7 +1,7 @@
 # STATUS — watch-list, closed decisions, open questions
 
 **Stance:** the platform is working and accepted. Nothing below is a work queue. Items are **optional** and raised only when relevant or requested,
-except section 2a, which has dates or security exposure that someone with authority should decide on.
+except section 2a, which someone with authority should decide on.
 Last refreshed 2026-10-13 from documents (latest record 2026-10-06; no live query). Update with date and provenance when you verify anything.
 
 ## 1. Current state (as last recorded) `[doc]`
@@ -17,8 +17,6 @@ Last refreshed 2026-10-13 from documents (latest record 2026-10-06; no live quer
 ## 2a. Needs a decision by someone with authority (dates / security)
 | Item | Why it matters | Who |
 |---|---|---|
-| **Dealership domain registrations** | surfcitynissan.com expires **2026-11-12**, coronanissan.com 2026-11-21, puentehillsnissan.com 2026-12-11. We don't own them; auto-renew unknown | CTO / dealers |
-| **DealerPulse DB exposed** | Managed Postgres reachable from any IP (Trusted Sources off); app uses `doadmin`; that password was printed into a transcript on 2026-09-18 → **rotate** | DO account holder, backend team, CTO |
 | Previous engineer's access | Their AWS access keys, SSH keys and WireGuard peers should be rotated or revoked per company policy after handover | lead / CTO |
 
 ## 2b. Watch-list (act only if asked or if they cause trouble)
@@ -41,6 +39,10 @@ Optional engineering ideas are listed in `records/TODO.md` (last edited 2026-09-
 optimizer (fix on branch `perf/next-image-optimizer-2026-09-22`), `.htm` redirects, Django logging, single Celery beat. Discuss before editing it.
 
 ## 3. Closed decisions (do not re-raise)
+- **Left as-is by the user (2026-10-13). Know the facts and explain them if asked, but don't raise them or propose fixes unprompted:**
+  - Dealership domain registrations are not ours. Per a 2026-09-25 lookup: surfcitynissan.com expires 2026-11-12, coronanissan.com 2026-11-21,
+    puentehillsnissan.com 2026-12-11.
+  - The DealerPulse managed Postgres has Trusted Sources off, the app uses `doadmin`, and that password appeared in a transcript on 2026-09-18.
 - **Runtime:** TIME_ZONE `Asia/Karachi`; Redis per node; HomeNet warms 3×/day.
 - **Load balancer and edge:** ALB stickiness off; keep `dealerpulse-tg-nginx`; Cloudflare SSL Full with self-signed origins; country allow-list US/CA/PK/JP; min TLS 1.2.
 - **Delivery:** no Puente Hills revert pipeline; frontend blue/green not built; legacy DigitalOcean pipelines stay until decommission.

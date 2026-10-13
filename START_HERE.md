@@ -87,5 +87,4 @@ Escalation contact: **____________________** (fill in: name / Slack / phone)
 You'll rarely need to open these yourself. Ask Claude, e.g. "Has this happened before?" or "What exactly happens when we merge to main-corona?"
 
 ## 8. Things that need someone with authority soon
-See `STATUS.md` §2a: dealership **domain renewals** (surfcitynissan.com expires 2026-11-12), the **DealerPulse database exposure**, and rotating the
-previous engineer's credentials. Raise these with your lead; they aren't changes to make on your own.
+See `STATUS.md` §2a: rotating the previous engineer's credentials. Raise this with your lead; it isn't a change to make on your own.
