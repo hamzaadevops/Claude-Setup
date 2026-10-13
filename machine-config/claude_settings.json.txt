@@ -1,0 +1,5 @@
+{
+  "autoUpdatesChannel": "latest",
+  "effortLevel": "high",
+  "model": "sonnet"
+}

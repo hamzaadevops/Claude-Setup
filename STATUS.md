@@ -9,14 +9,14 @@ Do not edit `Documentations/TODO.md` without discussing with the user.
 | # | Item | Last known state | Needs |
 |---|---|---|---|
 | 1 | DealerPulse managed Postgres: Trusted Sources off, app uses `doadmin` | Open since 2026-09-17, re-confirmed 09-22 | User approval; DO panel |
-| 2 | Integration VM memory: `chat_back` workers 4 vs 2 | Fix `3ed8deb` local-only at 10-05 | Push + deploy (approval) |
+| 2 | Integration VM memory: `chat_back` workers 4 vs 2 | Fix `3ed8deb` is on `origin/main-migrated` [verified 2026-10-13]; whether deployed to integration is unknown | Verify `--workers` on the container; deploy needs approval |
 | 3 | Memory + swap alarms (integration swap had **no alarm**) | Not built (TODO 1, 20 min, API only) | Approval to create alarms |
 | 4 | **Alarm on 428 rate / SSR success** (blind spot from the 10-01 incident) | Not built | Approval |
 | 5 | Code fix for `apiCrypto.ts` null-session caching + deploy ordering | Not done | Frontend dev |
 | 6 | HomeNet cache stampede (TODO 11) and Next image optimizer (TODO 12) | Not deployed as of 09-21 | Dev + deploy |
 | 7 | Legacy `.htm` URLs hitting SSR, worst 350 s (TODO 3a) | Message to frontend dev drafted | Dev + deploy |
 | 8 | Real health endpoint; only then matcher `200` | Blocked | Dev |
-| 9 | Corona and San Bernardino: set `NEXT_PUBLIC_IMAGE_ALLOWED_DOMAINS` / `NEXT_PUBLIC_SITE_URL`, cut domains to the ALB URL | Containers running; cutover pending (HANDOVER §1) | Domains + DNS owners |
+| 9 | Corona: **migrated** [told by user 2026-10-13, written as "12th Agust"; date unverified, probably 12 Oct]. San Bernardino: set `NEXT_PUBLIC_IMAGE_ALLOWED_DOMAINS` / `NEXT_PUBLIC_SITE_URL`, cut domain to the ALB URL | Corona: verify live (DNS, cert, vhost, Kuma monitor). SB: containers running, cutover pending (HANDOVER §1, older than the Corona news) | Domains + DNS owners |
 | 10 | Surf City placeholder vendor IDs (Capital One, Dealer700, DSS href) | Open, real-money risk if financing goes live | Vendor IDs from business |
 | 11 | Cox/xtime allowlisting of new hostnames; CF country rule may block vendor callbacks | Unconfirmed, oldest blocker | Vendor contact |
 | 12 | Django `LOGGING` / Sentry | Not done | Dev |

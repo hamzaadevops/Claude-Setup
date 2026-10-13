@@ -1,0 +1,130 @@
+# ─── DigitalOcean ────────────────────────────────────────────────────────────
+Host combined
+    HostName 137.184.45.248
+    User root
+    Port 22
+    IdentityFile ~/.ssh/digitalocean
+
+# Legacy Dealerships production droplet (pre-AWS-migration stack, still running)
+Host prod
+    HostName 143.198.144.174
+    User root
+    Port 22
+    IdentityFile ~/.ssh/digitalocean
+
+# DealerPulse — the SEPARATE, newer project (not the migrated Dealerships stack)
+Host dealerpulse
+    HostName 146.190.132.236
+    User root
+    Port 22
+    IdentityFile ~/.ssh/digitalocean
+
+# ─── AWS team VPN box — us-west-2, t4g.micro, i-0ad5d9743f6c95721 ────────────
+# Runs wg-easy (team VPN) and Uptime Kuma.
+#
+# TWO WAYS IN, and which one works depends on whether you are ON the VPN:
+#
+#   OFF the VPN -> use `node_vpn` / `kuma` / `wg-ui` (public IP 44.225.91.181).
+#                  Needs your current IP in team-vpn-sg :22 — the `MyUptimeIP`
+#                  skill does that, or the rule needs editing by hand.
+#
+#   ON  the VPN -> use `vpn-box` / `kuma-vpn` (tunnel IP 10.8.0.1).
+#                  NO security-group rule needed at all: the traffic arrives
+#                  inside the WireGuard tunnel, so the admin-IP allowlist is
+#                  irrelevant. This is the one that does not break when your
+#                  ISP reassigns your address.
+#
+# You CANNOT use the public-IP entries while connected to the VPN: your exit IP
+# then *is* 44.225.91.181, and the box cannot hairpin a connection to itself.
+# That failure looks exactly like a firewall block (connection timed out).
+
+# ── OFF the VPN (public IP) ──────────────────────────────────────────────────
+
+# Plain shell access
+Host node_vpn
+    HostName 44.225.91.181
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/team-vpn
+    ServerAliveInterval 20
+    ServerAliveCountMax 6
+    TCPKeepAlive yes
+
+# Uptime Kuma dashboard:   ssh kuma    → then open http://localhost:3001
+# Tunnel only (SessionType none) — no shell opens, Ctrl-C to close.
+# The keepalives matter here: Kuma's UI is entirely socket.io-driven, so a
+# silently dropped connection leaves the page blank or spinning rather than
+# showing an error. This tunnel dropped twice with "Connection reset by peer"
+# before these were added.
+Host kuma
+    HostName 44.225.91.181
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/team-vpn
+    ServerAliveInterval 20
+    ServerAliveCountMax 6
+    TCPKeepAlive yes
+    LocalForward 3001 127.0.0.1:3001
+    ExitOnForwardFailure yes
+    SessionType none
+
+# wg-easy admin UI:        ssh wg-ui   → then open http://localhost:51821
+Host wg-ui
+    HostName 44.225.91.181
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/team-vpn
+    ServerAliveInterval 20
+    ServerAliveCountMax 6
+    TCPKeepAlive yes
+    LocalForward 51821 127.0.0.1:51821
+    ExitOnForwardFailure yes
+    SessionType none
+
+# ── ON the VPN (tunnel IP 10.8.0.1) — no SG rule required ────────────────────
+
+# Shell:  ssh vpn-box
+Host vpn-box
+    HostName 10.8.0.1
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/team-vpn
+    ServerAliveInterval 20
+    ServerAliveCountMax 6
+    TCPKeepAlive yes
+
+# Uptime Kuma while on the VPN:  ssh kuma-vpn  → http://localhost:3001
+# Kuma is bound to 127.0.0.1 on the box, so it is NOT reachable at
+# 10.8.0.1:3001 directly — it still needs this forward. (That localhost binding
+# is deliberate; do not "fix" it by exposing the port.)
+Host kuma-vpn
+    HostName 10.8.0.1
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/team-vpn
+    ServerAliveInterval 20
+    ServerAliveCountMax 6
+    TCPKeepAlive yes
+    LocalForward 3001 127.0.0.1:3001
+    ExitOnForwardFailure yes
+    SessionType none
+
+# wg-easy admin UI while on the VPN:  ssh wg-ui-vpn  → http://localhost:51821
+#
+# USE THE TUNNEL, not http://10.8.0.1:51821 directly. The page loads either way,
+# but wg-easy v15 generates WireGuard keys in the browser with the Web Crypto API
+# (crypto.subtle), which browsers only expose in a SECURE CONTEXT — HTTPS or
+# localhost. Over plain HTTP to 10.8.0.1 you can log in but client creation
+# fails. Tunnelling to localhost satisfies the secure-context rule. (The proper
+# fix is TLS in front of 51821; until then, this is the working path.)
+Host wg-ui-vpn
+    HostName 10.8.0.1
+    User ubuntu
+    Port 22
+    IdentityFile ~/.ssh/team-vpn
+    ServerAliveInterval 20
+    ServerAliveCountMax 6
+    TCPKeepAlive yes
+    LocalForward 51821 127.0.0.1:51821
+    ExitOnForwardFailure yes
+    SessionType none

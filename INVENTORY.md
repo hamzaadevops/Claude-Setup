@@ -42,7 +42,7 @@ All `[doc]` unless marked; sources: HANDOVER.md, TENANTS_PUENTE_HILLS_SURF_CITY.
 |---|---|---|---|---|
 | Puente Hills Nissan | `www.puentehillsnissan.com` (+ `phn.callingyounow.us`) | `website_frontend` :3000 | `latest` | `main-migrated` |
 | Surf City Nissan | `surfcity.callingyounow.us` | `website_frontend_surfcity` :3001 | `latest_surfcity` | `main-surfcity` |
-| Corona Nissan | pending cutover (container running since ~09-26) | `website_frontend_corona` | n/a | `main-corona` |
+| Corona Nissan | **migrated per user (2026-10-13; exact date and hostname not recorded, verify live)**; container running since ~09-26 | `website_frontend_corona` | n/a | `main-corona` |
 | Nissan of San Bernardino | pending cutover (up since ~10-03) | `website_frontend_sanbernardino` | n/a | `main-sanbernardino` |
 
 Our own hostnames (`callingyounow.us`): `phn.`, `api.` (ALB, encrypted API), `admin.`, `chat.`, `leads.` (integration VM, Cloudflare-proxied nginx), `uptime.` (Kuma). Dealership IDs (CMS): Surf City `c3e9748b-353d-49b7-9599-86a3ba314fa2`.
