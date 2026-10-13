@@ -1,6 +1,6 @@
 # Full context — everything done in this Claude account (to 2026-10-13)
 
-Written for: you on the new laptop, and any teammate or Claude agent that needs full context.
+Written for: you on the new laptop, and any teammate or Claude agent that needs full context. Start with `CLAUDE.md` and `INTENT_ROUTER.md`; this file is the narrative overview.
 
 **Provenance convention.** `[doc]` = taken from a file in this repo or from Claude's saved memory,
 not re-checked live when this was written. `[verified]` = checked directly in the session that wrote
@@ -152,5 +152,5 @@ aws ec2 describe-instances --filters "Name=tag:Project,Values=dealerpulse" \
 aws cloudwatch describe-alarms --query "MetricAlarms[].[AlarmName,StateValue]" --output table
 aws elbv2 describe-target-groups --query "TargetGroups[].TargetGroupArn" --output text   # then describe-target-health
 aws elbv2 describe-rules --listener-arn <arn>      # confirm 50/50 vs 35/65 weighting
-git -C Documentations log --oneline -5
+git -C ../Documentations log --oneline -5
 ```

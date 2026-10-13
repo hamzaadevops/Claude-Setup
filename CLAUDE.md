@@ -1,8 +1,19 @@
-# CLAUDE.md — standing rules for any Claude agent working in this repo
+# CLAUDE.md — standing rules for any Claude agent (single source of truth)
 
-Place this file at the root of the `Documentations` folder on any machine. Claude Code loads it
-automatically, so every agent (yours or a teammate's) starts with the same rules.
-Full context: `Claude-Setup/CONTEXT.md`. Operational handover: `HANDOVER.md`.
+This pack (`Documents\Claude-Setup`, repo `hamzaadevops/Claude-Setup`) is the **single source of truth** for how to work in this
+account. It is loaded by `Documents\CLAUDE.md`, which imports this file. If a Claude memory note, an old doc or a chat message
+disagrees with this pack, say so and ask; when something is confirmed, update the pack.
+
+## 0. How to use the pack (read in this order)
+1. This file: rules that always apply.
+2. `INTENT_ROUTER.md`: maps the user's words to the right action, check and approval requirement. **Start here for any request.**
+3. `STATUS.md`: open / closed / unknown right now. `INVENTORY.md`: IDs, hosts, ports. `RUNBOOKS.md`: procedures.
+4. `INCIDENTS.md`: symptom -> cause -> fix history. `DEALERPULSE.md`: the separate project. `CONTEXT.md`: narrative overview and timeline.
+5. Deep detail lives outside the pack in `Documents\Documentations\` (`HANDOVER.md`, `Migration/MIGRATION_HISTORY.md`,
+   `Migration/COMMAND_LOG.md`, `TODO.md`, `DealerPulse/`, `Monitoring/`, `TeamVPN/`). `memory-export/` is the old Claude memory (reference copy).
+
+Maintenance: when you learn or change a fact, update the matching file here in the same session, with date and provenance.
+Everything in the pack is `[doc]` until you verify it live. Paths below starting `Migration/` mean `Documents\Documentations\Migration\`.
 
 ## 1. Two different projects — never mix them
 - **Dealerships** = the multi-tenant Nissan dealership platform, migrated DigitalOcean -> AWS (Aug–Sep 2026).
