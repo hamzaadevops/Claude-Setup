@@ -55,7 +55,6 @@ optimizer (fix on branch `perf/next-image-optimizer-2026-09-22`), `.htm` redirec
 - `max_connections` 150 (most sources) vs 100 (one history line).
 - Owner of the `callingyounow` product on the DealerPulse droplet; who owns `3.43.243.0/30`.
 - Purpose of `NEXT_PUBLIC_DSS_REGISTERED_HREF`; whether the 4-rooftop `is_multiple` grouping is intended.
-- Escalation contact for the operator (`START_HERE.md` §5).
 
 ## 5. Read-only refresh (run when picking this up; update this file)
 1. `aws sts get-caller-identity`

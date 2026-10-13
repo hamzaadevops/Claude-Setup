@@ -45,7 +45,7 @@ Claude will:
 ## 4. Safety rules (please keep these)
 - **Read-only is always fine.** Looking at logs, alarms, container status or settings never breaks anything.
 - **Any change needs your explicit "yes".** If you don't understand the risk Claude describes, don't approve it. Ask Claude to explain again, or
-  ask your escalation contact (below).
+  ask your lead.
 - **Never deploy by hand.** Releases go through the Bitbucket pipeline only.
 - **Never rename** anything called `dealerpulse-*` in AWS. The name looks wrong but it's correct, and renaming breaks the sites.
 - **Some actions Claude is not allowed to do** (create passwords or keys, purge Cloudflare cache by API, install software on servers). Claude will
@@ -58,7 +58,6 @@ Claude will:
 - Anything on the **DealerPulse** server or its database.
 - Claude says it is unsure, or the evidence contradicts the docs.
 
-Escalation contact: **____________________** (fill in: name / Slack / phone)
 
 ## 6. Words you'll hear
 | Term | Meaning |

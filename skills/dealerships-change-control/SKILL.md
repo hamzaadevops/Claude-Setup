@@ -40,7 +40,7 @@ ROLLBACK:  exact undo steps
 VERIFY:    how we'll know it worked
 ESCALATE?: yes if it touches the database, security groups/firewall, DNS, Cloudflare security, deletion, IAM, or DealerPulse
 ```
-Ask for an explicit yes. If ESCALATE is yes, recommend the operator confirms with their escalation contact first (`START_HERE.md` §5).
+Ask for an explicit yes. If ESCALATE is yes, recommend the operator confirms with their lead first (`START_HERE.md` §5).
 A general instruction ("fix it", "clean up") is not a yes for a specific command.
 
 ## Step 4 — Execute narrowly, verify, record
