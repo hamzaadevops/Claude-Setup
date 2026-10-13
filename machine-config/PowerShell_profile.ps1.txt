@@ -1,6 +1,0 @@
-# DealerPulse AWS SSM session shortcuts
-$script:AwsExe = "C:\Users\Hamza DevOps\AppData\Local\Programs\Amazon\AWSCLIV2\aws.exe"
-
-function node_a  { & $script:AwsExe ssm start-session --target i-061291ea974c4ea1b }   # nodeA
-function node_b  { & $script:AwsExe ssm start-session --target i-0c982c44f93bfbc0a }   # nodeB
-function node_int { & $script:AwsExe ssm start-session --target i-03efb82c808863f84 }  # integration-node

@@ -1,3 +1,0 @@
-[default]
-login_session = arn:aws:iam::409289617504:user/HamzaDevOps
-region = us-west-2

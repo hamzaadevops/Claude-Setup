@@ -1,30 +1,46 @@
-# Claude-Setup — single source of truth for this account
+# Claude-Setup — operating knowledge for the Dealerships platform and side systems
 
-Repo: `hamzaadevops/Claude-Setup`. Lives at `Documents\Claude-Setup`. **Keep the repo private** (see STATUS §5).
+Single source of truth for any engineer or Claude agent working on:
+- the **Dealerships** multi-tenant dealership platform on **AWS** (`409289617504`, `us-west-2`), and
+- the **side systems**: team VPN + Uptime Kuma box, rented RDP box, and the **DigitalOcean** estate (DealerPulse product, legacy hosts).
 
+**Stance:** the system works and is accepted. Keep it running with minimal change. The architecture is the core knowledge; improvement lists are optional.
+
+## Contents
 | File | Purpose |
 |---|---|
-| `CLAUDE.md` | Rules that always apply + reading order. Loaded through `Documents\CLAUDE.md` |
-| `INTENT_ROUTER.md` | "When someone says X, do Y": disambiguation, triage, deploys, monitoring, writing, side systems, approval needs |
-| `STATUS.md` | Open items, closed decisions, document conflicts, unknowns, security notes, refresh checklist |
-| `INVENTORY.md` | AWS / Cloudflare / host / tenant / SSH / third-party identifiers |
-| `RUNBOOKS.md` | Deploy, new dealership, daily sweep, access, Cloudflare changes, logging templates |
-| `INCIDENTS.md` | Symptom -> cause -> fix table and recurring failure shapes |
-| `DEALERPULSE.md` | The separate DigitalOcean project |
-| `CONTEXT.md` | Narrative overview, timeline, doc map, Claude config inventory |
-| `memory-export/`, `skills-export/` | Reference copy of old Claude memory and the two custom skills |
-| `CLAUDE-root-pointer.md` | Copy of `Documents\CLAUDE.md` (the 4-line file that imports this pack) |
+| `CLAUDE.md` | Rules every agent follows; reading order |
+| `ARCHITECTURE.md` | **Primary reference**: systems, request flow, components, security, invariants, accepted trade-offs |
+| `INTENT_ROUTER.md` | "When someone says X, do Y", with approval requirements |
+| `INVENTORY.md` | IDs, hostnames, ports, zones, SSH aliases, third parties |
+| `RUNBOOKS.md` | Procedures: deploy, new dealership, health sweep, access, Cloudflare, logging |
+| `INCIDENTS.md` | Past incidents: symptom -> cause -> fix |
+| `STATUS.md` | Watch-list (optional improvements), closed decisions, open questions |
+| `DEALERPULSE.md` | The DigitalOcean product in detail |
+| `CONTEXT.md` | History and timeline |
+| `skills/` | Topic skills that feed an agent the right context on demand |
+| `memory-export/` | Earlier detailed notes (reference only) |
 
-## Set up on a new laptop
-1. Install Claude Code (log in fresh; never copy `~/.claude/.credentials.json`), AWS CLI v2, Git, OpenSSH.
-2. `cd Documents`; clone `Claude-Setup` and `Documentations` (`hamzaadevops/...`) and the app repos (Bitbucket `nxpt/*`).
-3. Copy `Claude-Setup\CLAUDE-root-pointer.md` to `Documents\CLAUDE.md`. Now any Claude session opened in `Documents` loads the rules, and a
-   teammate's agent behaves the same with no private memory.
-4. Copy `skills-export\*` to `~\.claude\skills\`. Restore SSH config aliases (INVENTORY §6), keys, `aws configure` by secure channel.
-5. Optional: copy `memory-export\*.md` into `~\.claude\projects\<encoded-path>\memory\`. The pack already supersedes it.
-6. First prompt: *"Read Claude-Setup/CLAUDE.md, INTENT_ROUTER.md and STATUS.md. Run the refresh checklist in STATUS §6 read-only and tell me
-   what differs from the docs."*
-7. Re-authorize claude.ai connectors you use.
+## Skills
+| Skill | Triggers on |
+|---|---|
+| `dealerships-architecture` | how things work, where things run, before any change |
+| `dealerships-change-control` | any write/deploy/restart/config change, "fix", "optimise", TODO |
+| `dealerships-deploy` | deploy, release, rollback, env vars, new dealership |
+| `dealerships-edge-cloudflare` | Cloudflare, cache, WAF, 52x, certs, security groups |
+| `dealerships-monitoring` | health checks, alarms, dashboards, logs, Kuma |
+| `dealerships-troubleshooting` | anything reported broken or slow |
+| `team-vpn-and-uptime` | VPN, US exit IP, Kuma, VPN box, RDP box |
+| `dealerpulse-digitalocean` | DealerPulse product, droplet, DO database, legacy hosts |
+| `ConnectWireguardUI` | open the wg-easy UI / add a VPN client (action) |
+| `MyUptimeIP` | allowlist an admin IP on the VPN box (action) |
+
+## Using it with Claude Code
+1. Place the pack at `Documents\Claude-Setup` and copy `CLAUDE-root-pointer.md` to `Documents\CLAUDE.md` (it imports the pack's rules).
+2. Copy every folder in `skills\` to `~\.claude\skills\`.
+3. Open Claude Code in `Documents`. Ask it to read `ARCHITECTURE.md` and run the read-only refresh in `STATUS.md` §5 to confirm the docs match live state.
+4. Access needed for live work: AWS CLI v2 session for the account, SSH keys `~/.ssh/team-vpn` and `~/.ssh/digitalocean` with the aliases in
+   `INVENTORY.md` §6, Bitbucket `nxpt` access, Cloudflare dashboard access. Secrets never live in this pack.
 
 ## Keeping it true
-Update the file in the same session you learn something. Mark `[verified]` with a date when you checked it live. Never store secrets here.
+Update the matching file in the same session you learn something; mark `[verified]` with a date when checked live.

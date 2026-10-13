@@ -71,5 +71,7 @@ OpenRouter (chatbot LLM), HomeNet (inventory SOAP + image CDN `content.homenetio
 ## 8. People `[doc]`
 Hamza (DevOps, owner of this account). Mudassar (addressee of `DealerPulse/SMS_ISSUE_MUDASSAR.md`). Ghulam Ali (was given the proposed frontend ChunkLoadError handler; role not stated). A CTO and a senior backend dev receive the user's relayed findings. Roles beyond that are not recorded; ask.
 
-## 9. Local machine layout
-`Documents\Documentations` (docs, git -> `hamzaadevops/Documentations`), `Documents\Claude-Setup` (this pack), repos `ocean`, `website_frontend`, `integrations_service`, `chat_back`, `framework_frontend`, `dp_backend_v2`, `dp_frontend_v2`, `starfish`. Scripts/artefacts in `Documents\`: `deploy_sh_*`, nginx confs, dumps (`dealerpulse.dump`, `nisan_website.dump`), `AWS_Cost_Report_Sep-Oct_2026.pdf`, `dealerpulse-infra-diagram.html`, `env_list.json`, `vars_*.json`.
+## 9. Workspace layout (expected)
+`Documents\Claude-Setup` (this pack), `Documents\Documentations` (detailed records), and the application repos cloned under `Documents\`:
+`ocean`, `website_frontend`, `integrations_service`, `chat_back`, `framework_frontend`, `dp_backend_v2`, `dp_frontend_v2`, `starfish`.
+Secrets, env files and database dumps are never stored in the pack or the docs.

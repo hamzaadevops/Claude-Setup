@@ -1,8 +1,12 @@
 # INTENT_ROUTER — "when someone says X, do Y"
 
-Read this after `CLAUDE.md`. Find the closest row, then follow the linked section. Every row says whether
+Read this after `CLAUDE.md` and `ARCHITECTURE.md`. Find the closest row, then follow it and load the named skill. Every row says whether
 **approval is needed** before acting. If nothing matches, fall back to: *read-only investigation first, state
-what you verified, propose the narrowest action, wait for a yes.*
+what you verified, propose the narrowest action, wait for a yes.* The system is stable and accepted, so the default outcome is no change.
+
+Skills by topic: architecture `dealerships-architecture` · changes `dealerships-change-control` · deploys `dealerships-deploy` ·
+Cloudflare/SG/certs `dealerships-edge-cloudflare` · health/alarms `dealerships-monitoring` · broken/slow `dealerships-troubleshooting` ·
+VPN/Kuma/RDP `team-vpn-and-uptime` · DigitalOcean `dealerpulse-digitalocean`.
 
 Provenance tags: `[doc]` from our files (re-verify live), `[verified]` checked at time of writing.
 Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`, repos = `Documents\<repo>\`.
@@ -72,7 +76,9 @@ Paths: docs = `Documents\Documentations\`, this pack = `Documents\Claude-Setup\`
 | "Uptime / Kuma" | `uptime.callingyounow.us`; setup `Monitoring/UPTIME_MONITORING_SETUP.md`, list `MONITOR_CHECKLIST.md`. Keyword checks use street address, not dealership name |
 | "MyUptimeIP <ip>" | Invoke skill `MyUptimeIP` |
 | "Logs / what happened at HH:MM" | Container logs are `+0500`, nginx and CloudWatch are **UTC**; user is in Pakistan (PKT = UTC+5) |
-| "What's pending / priorities" | `STATUS.md`, then `Documentations/TODO.md` (**do not edit TODO without discussion**) |
+| "What's pending / priorities" | The system is stable and accepted: nothing is mandatory. Show `STATUS.md` watch-list and open questions; `Documentations/TODO.md` only as optional ideas (**do not edit without discussion**) |
+| "How does X work / explain the setup" | `ARCHITECTURE.md` + skill `dealerships-architecture` (or `dealerpulse-digitalocean`). Describe as built; do not propose changes unless asked |
+| "Should we improve / optimise / upgrade X" | Skill `dealerships-change-control`: default is no change; give the trade-off, wait for a decision |
 | "What did we do about X / why" | `Documentations/Migration/MIGRATION_HISTORY.md` (narrative) then `COMMAND_LOG.md` (exact commands) |
 | "Cost / bill" | `Documents/AWS_Cost_Report_Sep-Oct_2026.pdf`; history entry 2026-10-03 "Cost cleanup"; `OCTOBER_CAPACITY_PLAN.md` |
 | "Is X still true?" | Run the read-only command, report `[verified]` with output, update `STATUS.md` |

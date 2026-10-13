@@ -1,6 +1,0 @@
-# DealerPulse AWS SSM session shortcuts
-AWS_EXE="/c/Users/Hamza DevOps/AppData/Local/Programs/Amazon/AWSCLIV2/aws.exe"
-
-node_a() { "$AWS_EXE" ssm start-session --target i-061291ea974c4ea1b; }   # nodeA
-node_b() { "$AWS_EXE" ssm start-session --target i-0c982c44f93bfbc0a; }   # nodeB
-node_int() { "$AWS_EXE" ssm start-session --target i-03efb82c808863f84; } # integration-node
