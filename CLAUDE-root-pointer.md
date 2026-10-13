@@ -1,4 +1,4 @@
-# Documents workspace
+# Repositories workspace (D:\Nexrupt Data\Repositories)
 
 @Claude-Setup/CLAUDE.md
 

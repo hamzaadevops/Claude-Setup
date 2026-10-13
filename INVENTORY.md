@@ -60,7 +60,10 @@ Puente Hills `is_multiple` group = 4 rooftops (loads ~27.6 MB per inventory requ
 - Cache rules (phn): static assets 30 d override-origin (matches **extension**, incl. `public/` images); `/_next/image` rule; HTML edge cache `respect_origin` excluding `/api/*`, `/_next/*`, RSC headers (**do not remove the RSC exclusion**: cache poisoning); response-phase `strip_set_cookie` (kills ALB cookie, hence no stickiness); 4xx/5xx edge TTL 0 on the static rule. Zone-wide "Cache Everything [Template]" must stay **disabled**.
 
 ## 5. Source control / CI
-Bitbucket workspace `nxpt` (repos `ocean`, `website_frontend`, `integrations_service`, `chat_back`, `framework_frontend`, `backend_v2.1`, `dp_frontend_v2`). GitHub: `hamzaadevops/Documentations`, `hamzaadevops/Claude-Setup`. Pipeline deployment environments: `aws-production`, `aws-prod-surfcity`, Staging. Variables snapshots: `Documents/vars_*.json` (sensitive).
+Bitbucket workspace `nxpt` (repos `ocean`, `website_frontend`, `integrations_service`, `chat_back`, `framework_frontend`, `backend_v2.1`, `dp_frontend_v2`).
+This pack: GitHub `hamzaadevops/Claude-Setup`. Bitbucket deployment environments: `aws-production` (Puente Hills + admin build), `aws-prod-surfcity`,
+`aws-prod-corona`, `aws-prod-sanbernardino`, `cache-purge`, `aws-node-a`, `aws-node-b` (ocean), plus legacy `staging`/`production`/`master`.
+Build variable values live only in Bitbucket (never copy them into the pack).
 `website_frontend/bitbucket-pipelines.yml` also holds dead branches `nissan-surf-city`, `nissan-crona`, `nissan-san-bernardino`, `security-workings`: ignore.
 
 ## 6. SSH hosts (`~/.ssh/config`)
@@ -70,9 +73,23 @@ Bitbucket workspace `nxpt` (repos `ocean`, `website_frontend`, `integrations_ser
 OpenRouter (chatbot LLM), HomeNet (inventory SOAP + image CDN `content.homenetiol.com`), JD Power (rebates), VinSolutions/Cox (leads), xtime, Capital One / Dealer700 / DSS (financing IDs), Podium (reviews sync every 2 h at :15, not yet connected), Slack/Chatbot, Bitbucket, Cloudflare, Hostinger (DealerPulse DNS). DealerPulse adds Twilio, Retell, Wassenger, AssemblyAI, Cox Automotive, S3, SMTP.
 
 ## 8. People `[doc]`
-Hamza (DevOps, owner of this account). Mudassar (addressee of `DealerPulse/SMS_ISSUE_MUDASSAR.md`). Ghulam Ali (was given the proposed frontend ChunkLoadError handler; role not stated). A CTO and a senior backend dev receive the user's relayed findings. Roles beyond that are not recorded; ask.
+Hamza (DevOps; built and documented this setup). Mudassar (addressee of `DealerPulse/SMS_ISSUE_MUDASSAR.md`). Ghulam Ali (was given the proposed frontend ChunkLoadError handler; role not stated). A CTO and a senior backend dev receive the user's relayed findings. Roles beyond that are not recorded; ask.
 
-## 9. Workspace layout (expected)
-`Documents\Claude-Setup` (this pack), `Claude-Setup\records` (detailed records), and the application repos cloned under `Documents\`:
-`ocean`, `website_frontend`, `integrations_service`, `chat_back`, `framework_frontend`, `dp_backend_v2`, `dp_frontend_v2`, `starfish`.
-Secrets, env files and database dumps are never stored in the pack or the docs.
+## 9. Workspace layout
+Workspace root: **`D:\Nexrupt Data\Repositories\`**. Everything is cloned side by side there:
+
+| Folder | Clone from | Branch to keep checked out |
+|---|---|---|
+| `CLAUDE.md` (file) | copy of `Claude-Setup\CLAUDE-root-pointer.md` | — |
+| `Claude-Setup` | `https://github.com/hamzaadevops/Claude-Setup.git` | `master` |
+| `ocean` | `https://bitbucket.org/nxpt/ocean.git` | `main-migrated` |
+| `website_frontend` | `https://bitbucket.org/nxpt/website_frontend.git` | `main-migrated` (tenants: `main-surfcity`, `main-corona`, `main-sanbernardino`) |
+| `integrations_service` | `https://bitbucket.org/nxpt/integrations_service.git` | `main-migrated` |
+| `chat_back` | `https://bitbucket.org/nxpt/chat_back.git` | `main-migrated` |
+| `framework_frontend` | `https://bitbucket.org/nxpt/framework_frontend.git` | `main-migrated` |
+| `dp_backend_v2` | `https://bitbucket.org/nxpt/backend_v2.1.git` (folder name differs from repo name on purpose) | `main` |
+| `dp_frontend_v2` | `https://bitbucket.org/nxpt/dp_frontend_v2.git` | `main` |
+
+Why side by side: Claude loads `CLAUDE.md` from the folder it's opened in and every parent, so the rules apply whether Claude is opened at the root or
+inside any repo. Never put `Claude-Setup` or that `CLAUDE.md` inside an app repo (it would reach Bitbucket). Never push to `main`/`master`/`staging` in the
+app repos: legacy pipelines still deploy to old servers. Secrets, env files and database dumps are never stored in the pack.

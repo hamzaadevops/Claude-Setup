@@ -9,7 +9,8 @@ Cloudflare/SG/certs `dealerships-edge-cloudflare` · health/alarms `dealerships-
 VPN/Kuma/RDP `team-vpn-and-uptime` · DigitalOcean `dealerpulse-digitalocean`.
 
 Provenance tags: `[doc]` from our files (re-verify live), `[verified]` checked at time of writing.
-Paths: docs = `Claude-Setup\records\`, this pack = `Documents\Claude-Setup\`, repos = `Documents\<repo>\`.
+Paths: workspace root = `D:\Nexrupt Data\Repositories\`; this pack = `<root>\Claude-Setup\` (records in `records\`, deep reference in `knowledge\`);
+application repos = `<root>\<repo>\`.
 
 ---
 
@@ -85,7 +86,7 @@ Paths: docs = `Claude-Setup\records\`, this pack = `Documents\Claude-Setup\`, re
 | "How does X work / explain the setup" | `ARCHITECTURE.md` + skill `dealerships-architecture` (or `dealerpulse-digitalocean`). Describe as built; do not propose changes unless asked |
 | "Should we improve / optimise / upgrade X" | Skill `dealerships-change-control`: default is no change; give the trade-off, wait for a decision |
 | "What did we do about X / why" | `records/Migration/MIGRATION_HISTORY.md` (narrative) then `COMMAND_LOG.md` (exact commands) |
-| "Cost / bill" | `Documents/AWS_Cost_Report_Sep-Oct_2026.pdf`; history entry 2026-10-03 "Cost cleanup"; `OCTOBER_CAPACITY_PLAN.md` |
+| "Cost / bill" | `records/Migration/AWS_Cost_Report_Sep-Oct_2026.pdf`; history entry 2026-10-03 "Cost cleanup"; `records/Migration/OCTOBER_CAPACITY_PLAN.md`; `knowledge/ISSUES_AWS_B.md` section (d) |
 | "Is X still true?" | Run the read-only command, report `[verified]` with output, update `STATUS.md` |
 
 ## E. Writing and communication

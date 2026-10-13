@@ -5,14 +5,14 @@
 I modified no files and ran no aws/ssh/curl/git commands. No secret values are included, only names. All facts are `[doc]` (taken from files, not checked live).
 
 **Citation keys** (line numbers are 1-based, from the files as they are today):
-- **MH** = `C:\Users\Hamza DevOps\Documents\Documentations\Migration\MIGRATION_HISTORY.md` (I read lines 1800-3599; the file ends at 3599)
-- **CL** = `...\Documentations\Migration\COMMAND_LOG.md` (I checked lines 2700-3088 for the sweep commands and the gotchas)
-- **CF** = `C:\Users\Hamza DevOps\Documents\Claude-Setup\memory-export\project_dealerships_cloudflare_config.md`
+- **MH** = `records\Migration\MIGRATION_HISTORY.md` (I read lines 1800-3599; the file ends at 3599)
+- **CL** = `records\Migration\COMMAND_LOG.md` (I checked lines 2700-3088 for the sweep commands and the gotchas)
+- **CF** = `memory-export\project_dealerships_cloudflare_config.md`
 - **VPNm** = `...memory-export\project_team_vpn.md`; **RDP** = `...memory-export\project_fluten_rdp_box.md`; **CRED** = `...memory-export\feedback_credential_creation_blocked.md`
-- **VH** = `...\Documentations\TeamVPN\HISTORY.md`; **VCL** = `...\Documentations\TeamVPN\COMMAND_LOG.md`
-- **UMS** = `...\Documentations\Monitoring\UPTIME_MONITORING_SETUP.md`; **MC** = `...\Monitoring\MONITOR_CHECKLIST.md`; **UCY** = `...\Monitoring\uptime-compose.yml`; **NGX** = `...\Monitoring\nginx-uptime.callingyounow.us.conf`; **NGXP** = `...\Monitoring\nginx-kuma-proxy-public.conf`
-- **OCP** = `...\Migration\OCTOBER_CAPACITY_PLAN.md`; **CB** = `...\Migration\CALL_BRIEF_2026-09-18.md`; **HO** = `...\Documentations\HANDOVER.md`
-- **SK-UIP** = `C:\Users\Hamza DevOps\.claude\skills\MyUptimeIP\SKILL.md`; **SK-WG** = `C:\Users\Hamza DevOps\.claude\skills\ConnectWireguardUI\SKILL.md`. I read these only to cross-check the procedures in section (c).
+- **VH** = `records\TeamVPN\HISTORY.md`; **VCL** = `records\TeamVPN\COMMAND_LOG.md`
+- **UMS** = `records\Monitoring\UPTIME_MONITORING_SETUP.md`; **MC** = `...\Monitoring\MONITOR_CHECKLIST.md`; **UCY** = `...\Monitoring\uptime-compose.yml`; **NGX** = `...\Monitoring\nginx-uptime.callingyounow.us.conf`; **NGXP** = `...\Monitoring\nginx-kuma-proxy-public.conf`
+- **OCP** = `...\Migration\OCTOBER_CAPACITY_PLAN.md`; **CB** = `...\Migration\CALL_BRIEF_2026-09-18.md`; **HO** = `records\HANDOVER.md`
+- **SK-UIP** = `skills\MyUptimeIP\SKILL.md`; **SK-WG** = `skills\ConnectWireguardUI\SKILL.md`. I read these only to cross-check the procedures in section (c).
 
 ---
 
@@ -829,7 +829,7 @@ aws ssm send-command --region us-west-2 --instance-ids <nodeA|nodeB|integration>
 
 ## (d) Cost-related decisions
 
-**2026-10-03 cost cleanup** (MH:3491-3514; CL:3013-3050). Context: the September bill was $210.04 and October was estimated at about $242, because nodeA and nodeB are t3.large for the whole month (report at `Documents\AWS_Cost_Report_Sep-Oct_2026.pdf`). The user asked for three small cleanups:
+**2026-10-03 cost cleanup** (MH:3491-3514; CL:3013-3050). Context: the September bill was $210.04 and October was estimated at about $242, because nodeA and nodeB are t3.large for the whole month (report at `records\Migration\AWS_Cost_Report_Sep-Oct_2026.pdf`). The user asked for three small cleanups:
 1. **Released idle EIP 34.210.45.11** (`eipalloc-03513392a6fcc0de0`), about $3.72/month. Not recoverable.
 2. **ECR lifecycle policies on all 5 repos** (previously none; 26.7 GB stored, 8.6 GB-month billed).
    - Rules: protect `latest*` and `pre-*`; keep the last 10 per dealership stream; keep the last 10 other builds (30 for website-frontend); expire untagged images after 7 days, **except chat-backend**.

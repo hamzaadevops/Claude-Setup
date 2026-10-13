@@ -40,9 +40,11 @@ Single source of truth for any engineer or Claude agent working on:
 | `MyUptimeIP` | allowlist an admin IP on the VPN box (action) |
 
 ## Using it with Claude Code
-1. Place the pack at `Documents\Claude-Setup` and copy `CLAUDE-root-pointer.md` to `Documents\CLAUDE.md` (it imports the pack's rules).
+1. Clone the pack to `D:\Nexrupt Data\Repositories\Claude-Setup` and copy `CLAUDE-root-pointer.md` to `D:\Nexrupt Data\Repositories\CLAUDE.md`
+   (it imports the pack's rules). Clone the application repos beside it (layout and URLs: `INVENTORY.md` §9).
 2. Copy every folder in `skills\` to `~\.claude\skills\`.
-3. Open Claude Code in `Documents`. Ask it to read `ARCHITECTURE.md` and run the read-only refresh in `STATUS.md` §5 to confirm the docs match live state.
+3. Open Claude Code in `D:\Nexrupt Data\Repositories`. Ask it to read `ARCHITECTURE.md` and run the read-only refresh in `STATUS.md` §5 to confirm
+   the docs match live state.
 4. Access needed for live work: AWS CLI v2 session for the account, SSH keys `~/.ssh/team-vpn` and `~/.ssh/digitalocean` with the aliases in
    `INVENTORY.md` §6, Bitbucket `nxpt` access, Cloudflare dashboard access. Secrets never live in this pack.
 

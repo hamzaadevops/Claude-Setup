@@ -14,11 +14,13 @@ can browse from a US IP) with **Uptime Kuma** monitoring on the same small serve
 
 ## 2. One-time setup
 1. Install Claude Code, Git, the AWS CLI v2 and OpenSSH.
-2. Put this repository at `Documents\Claude-Setup`. Copy `CLAUDE-root-pointer.md` to `Documents\CLAUDE.md`.
+2. Your workspace is **`D:\Nexrupt Data\Repositories`**. Clone this repository there as `Claude-Setup`, and copy `CLAUDE-root-pointer.md` up one level
+   as `D:\Nexrupt Data\Repositories\CLAUDE.md`. Clone the application repos beside it (`INVENTORY.md` §9 lists them).
 3. Copy every folder in `skills\` into `C:\Users\<you>\.claude\skills\`.
 4. Get access from your lead (Claude cannot create these for you): AWS console/CLI login for account `409289617504`, Bitbucket workspace `nxpt`,
    Cloudflare dashboard, SSH keys `team-vpn` and `digitalocean`, Slack channel `#aws-alerts-dealerpulse`.
-5. Open Claude Code in your `Documents` folder and type: **"I'm new. Read the Claude-Setup pack and explain what I'm looking after."**
+5. Open Claude Code in `D:\Nexrupt Data\Repositories` and type: **"I'm new. Read the Claude-Setup pack and explain what I'm looking after."**
+   Always open Claude there or inside one of the repos, so the rules load.
 
 ## 3. How to work with your Claude
 Just describe what you see or want, in plain words. Claude finds the right skill. Examples:

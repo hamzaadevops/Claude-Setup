@@ -1,7 +1,8 @@
 # CLAUDE.md — standing rules for any Claude agent (single source of truth)
 
-This pack (`Documents\Claude-Setup`) is the **single source of truth** for working on the Dealerships AWS platform and its side systems
-on DigitalOcean. It is loaded through `Documents\CLAUDE.md`, which imports this file. If memory, an old doc or a chat message disagrees
+This pack (`D:\Nexrupt Data\Repositories\Claude-Setup`) is the **single source of truth** for working on the Dealerships AWS platform and its side systems
+on DigitalOcean. It is loaded through `D:\Nexrupt Data\Repositories\CLAUDE.md`, which imports this file. That folder is the **workspace root**: the pack
+and every application repo are cloned side by side in it. If memory, an old doc or a chat message disagrees
 with the pack, say so and ask; once confirmed, update the pack.
 
 ## 0. Stance: stability first
@@ -32,6 +33,9 @@ the blast radius, then present a plain-language change brief and wait for an exp
 7. **Records** in `records/` (the original evidence, cited by line from the knowledge files): `Migration/MIGRATION_HISTORY.md` (narrative),
    `Migration/COMMAND_LOG.md` (every executed command), `HANDOVER.md`, `TODO.md`, `Monitoring/`, `TeamVPN/`, `DealerPulse/`, `deploy-scripts/`,
    `pre-migration/` (historical). `memory-export/` holds the earlier session notes (reference).
+
+File paths written inside `records/` and `memory-export/` reflect the folder layout of the machine they were written on. The files they point to
+are in `records/` (same sub-folder names, e.g. `Migration/`, `Monitoring/`, `TeamVPN/`, `DealerPulse/`).
 
 Everything in the pack is `[doc]` until verified live. When you verify or change a fact, update the pack in the same session with date and provenance.
 

@@ -26,7 +26,7 @@ usually the backend team (Mudassar is the named contact on the SMS issue).
 ## Name traps
 - "DealerPulse" also prefixes every Dealerships AWS resource.
 - "Surf City" is also a Dealerships tenant and a dead v1 site.
-- `Documents/dealerpulse.dump` and `Documents/dealerpulse-infra-diagram.html` belong to **Dealerships**, not this product.
+- Older local files named `dealerpulse.dump` and `dealerpulse-infra-diagram.html` (not in this pack) belong to **Dealerships**, not this product.
 - The 2026-10-02 OpenRouter outage was the **Dealerships** chatbot.
 
 ## Provenance

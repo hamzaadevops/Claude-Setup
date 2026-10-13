@@ -3,20 +3,20 @@
 # Dealerships AWS platform: catalogue of issues, incidents and gotchas
 
 **Scope:** I read all four requested sources in full, read-only.
-- `Documentations/Migration/MIGRATION_HISTORY.md` lines 1–1810.
+- `records/Migration/MIGRATION_HISTORY.md` lines 1–1810.
 - `Claude-Setup/memory-export/project_dealerships_aws_migration.md`, all 735 lines.
-- `Documentations/TODO.md`, `Documentations/TENANTS_PUENTE_HILLS_SURF_CITY.md` and `Documentations/INVENTORY_PERFORMANCE_FINDINGS.md`.
+- `records/TODO.md`, `records/TENANTS_PUENTE_HILLS_SURF_CITY.md` and `records/INVENTORY_PERFORMANCE_FINDINGS.md`.
 
 I did not run AWS, SSH, curl or git, and I copied no secret values.
 
 **Status reflects the documents, not a live check.** Every "status" below is as of the latest mention in these files (the latest is 2026-09-17). All of it is [doc], meaning a file says so; I verified none of it live.
 
 **Citation keys:**
-- **MH:n** = `C:/Users/Hamza DevOps/Documents/Documentations/Migration/MIGRATION_HISTORY.md` line n
-- **MEM:n** = `C:/Users/Hamza DevOps/Documents/Claude-Setup/memory-export/project_dealerships_aws_migration.md` line n (each line is one dense paragraph)
-- **TODO:n** = `C:/Users/Hamza DevOps/Documents/Documentations/TODO.md`
-- **TEN:n** = `C:/Users/Hamza DevOps/Documents/Documentations/TENANTS_PUENTE_HILLS_SURF_CITY.md`
-- **INV:n** = `C:/Users/Hamza DevOps/Documents/Documentations/INVENTORY_PERFORMANCE_FINDINGS.md`
+- **MH:n** = `records/Migration/MIGRATION_HISTORY.md` line n
+- **MEM:n** = `memory-export/project_dealerships_aws_migration.md` line n (each line is one dense paragraph)
+- **TODO:n** = `records/TODO.md`
+- **TEN:n** = `records/TENANTS_PUENTE_HILLS_SURF_CITY.md`
+- **INV:n** = `records/INVENTORY_PERFORMANCE_FINDINGS.md`
 
 **Host key** (needed to read logs correctly):
 - nodeA `i-061291ea974c4ea1b`, EIP 184.32.92.25 (MH:276, MEM:41)
@@ -809,7 +809,7 @@ Afterwards: rebuilt with the new `NEXT_PUBLIC_SITE_URL`, and set up a 301 from `
 
 **L-03 · No memory metrics: agent lacked `cloudwatch:PutMetricData` (2026-09-14 → fixed 2026-09-15)**
 - **Detected:** the agent log showed AccessDenied (retry 1,446).
-- **Fix [PROD-user]:** inline policy `dealerpulse-cloudwatch-metrics-write`, conditioned on namespace `CWAgent` (policy file `Documentations/Migration/cwagent-putmetricdata.json`).
+- **Fix [PROD-user]:** inline policy `dealerpulse-cloudwatch-metrics-write`, conditioned on namespace `CWAgent` (policy file `records/Migration/cwagent-putmetricdata.json`).
 - **False diagnosis to avoid:** IAM propagation took about 3 minutes. Don't "fix" a just-attached conditioned policy; wait.
 - **Ignore:** the stray metric `claude_permission_probe`.
 - **Cites:** MH:1253-1272.
@@ -841,7 +841,8 @@ Afterwards: rebuilt with the new `NEXT_PUBLIC_SITE_URL`, and set up a 301 from `
 ## PART 2 — Operational gotchas and rules learned
 
 **Windows, CLI and SSM**
-1. `aws.exe` is not on PATH in tool shells. Use `C:\Users\Hamza DevOps\AppData\Local\Programs\Amazon\AWSCLIV2\aws.exe` (MH:70-78, MEM:15).
+1. `aws.exe` may not be on PATH in tool shells opened before the install. Use its full path, typically `C:\Program Files\Amazon\AWSCLIV2\aws.exe` or
+   `%LOCALAPPDATA%\Programs\Amazon\AWSCLIV2\aws.exe` for a per-user install (MH:70-78, MEM:15).
 2. Git Bash (MSYS) mangles any argument starting with `/` (`file://`, `/dealerpulse/...` log groups, SSM parameter names). Use PowerShell or `export MSYS_NO_PATHCONV=1` (MH:97, MH:147, MH:562, MEM:31, MEM:134, MEM:283).
 3. PowerShell `Set-Content -Encoding utf8` writes a BOM, which gives `MalformedPolicyDocument`. Write with `[System.IO.File]::WriteAllText(path, content, (New-Object System.Text.UTF8Encoding $false))` (MH:97).
 4. **`aws ssm send-command --parameters commands="[...]"` containing `$(...)` is expanded locally and silently sends empty values.** Always write a JSON file and pass `--parameters file://...` (MH:488, MH:576, MEM:55).
