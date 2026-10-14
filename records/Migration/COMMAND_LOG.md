@@ -3086,3 +3086,20 @@ aws ec2 wait instance-terminated --instance-ids i-0b6037690786f7624 --region us-
 
 Nothing on nodeA/nodeB/integration was changed. No S3 objects, EIPs, SGs or target-group entries were
 created. Local `nodec/` helper scripts removed.
+
+---
+
+### 2026-10-14 — starfishfe.callingyounow.com redeployed from `main` (legacy DO `prod` droplet)
+
+Not part of the AWS platform. `starfishfe.callingyounow.com` (DNS-only, no Cloudflare proxy) -> `143.198.144.174` (`prod`, legacy DigitalOcean). nginx vhost
+`/etc/nginx/sites-available/starfishfe.callingyounow.com` proxies to `127.0.0.1:3000` = container `starfish-radar` (Vite + React "Starfish Radar" + `server.mjs`),
+compose project `/var/www/starfish`, remote `git@bitbucket.org:nxpt/starfish.git`. No pipeline found; manual build on the box.
+
+**Approval:** user's explicit "pull latest code from main and redeploy" after a change brief (before: branch `hanan` @ `9b50d62`, up 6 days, image `sha256:917dc09e…`).
+
+Commands run over SSH on `prod`, in `/var/www/starfish`:
+1. `git fetch origin; git checkout main; git merge --ff-only origin/main` -> `main` @ `69c2e41` ("Merged in hanan (pull request #1)"), clean tree. Change vs `9b50d62`: `SiteReport.jsx` +40, `styles.css` +7 (plus `54f5b39` "api changes").
+2. `docker compose up --build -d` -> image `starfish-radar:latest` rebuilt (created 2026-10-14 17:39:13 UTC), only `starfish-radar` recreated; other containers untouched.
+3. Verified: container `Up (healthy)`; `https://starfishfe.callingyounow.com/login` -> 200; new bundle `assets/index-CgeXo375.js`.
+
+**Rollback:** `git checkout 9b50d62` then `docker compose up --build -d`. The server now tracks `main` (was `hanan`).
